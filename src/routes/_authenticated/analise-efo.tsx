@@ -9,13 +9,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import { formatBRL, formatPercent } from "@/lib/br-format";
 import { computeUpdated } from "@/lib/finance";
+import { RECEIVABLE_TYPES } from "@/lib/efo-schema";
 
 export const Route = createFileRoute("/_authenticated/analise-efo")({
   head: () => ({ meta: [{ title: "Análise EFO — EFO" }] }),
   component: EFOPage,
 });
 
-const REVENUE_TYPES = ["Receita", "Conta a Receber"];
+const REVENUE_TYPES = RECEIVABLE_TYPES as unknown as string[];
 const FIXED_CATS = ["Aluguel", "Energia/Água", "Internet", "Salários", "Sistemas", "Contabilidade"];
 
 function EFOPage() {
@@ -118,10 +119,10 @@ function EFOPage() {
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis dataKey="label" /><YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
               <Tooltip formatter={(v: number) => formatBRL(v)} /><Legend />
-              <Line type="monotone" dataKey="receitas" stroke="hsl(var(--success))" strokeWidth={2} name="Receitas" />
-              <Line type="monotone" dataKey="despesas" stroke="hsl(var(--destructive))" strokeWidth={2} name="Despesas" />
-              <Line type="monotone" dataKey="resultado" stroke="hsl(var(--primary))" strokeWidth={2} name="Resultado" />
-              <Line type="monotone" dataKey="juros" stroke="hsl(var(--warning))" strokeWidth={2} strokeDasharray="4 4" name="Juros" />
+              <Line type="monotone" dataKey="receitas" stroke="var(--success)" strokeWidth={2} name="Receitas" />
+              <Line type="monotone" dataKey="despesas" stroke="var(--destructive)" strokeWidth={2} name="Despesas" />
+              <Line type="monotone" dataKey="resultado" stroke="var(--primary)" strokeWidth={2} name="Resultado" />
+              <Line type="monotone" dataKey="juros" stroke="var(--warning)" strokeWidth={2} strokeDasharray="4 4" name="Juros" />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
