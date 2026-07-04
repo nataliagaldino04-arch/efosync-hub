@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/plano-acao")({
   component: PlanoAcaoPage,
 });
 
-const STATUSES = ["Pendente", "Em andamento", "Concluído", "Cancelado"];
+const STATUSES = ["Pendente", "Em andamento", "Concluído", "Atrasado", "Cancelado"];
 const PRIORITIES = ["Baixa", "Normal", "Alta", "Urgente"];
 
 interface Plan {
@@ -30,6 +30,7 @@ interface Plan {
   where_field: string | null; how: string | null;
   how_much: number | null; when_date: string | null;
   status: string; priority: string;
+  days_remaining: number | null;
 }
 
 function PlanoAcaoPage() {
@@ -132,18 +133,21 @@ function PlanoAcaoPage() {
           <Table>
             <TableHeader><TableRow>
               <TableHead>O quê</TableHead><TableHead>Quem</TableHead>
-              <TableHead>Quando</TableHead><TableHead className="text-right">Quanto</TableHead>
+              <TableHead>Quando</TableHead><TableHead className="text-right">Dias</TableHead><TableHead className="text-right">Quanto</TableHead>
               <TableHead>Prioridade</TableHead><TableHead>Status</TableHead>
               <TableHead className="w-32"></TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8">Carregando...</TableCell></TableRow>
-                : plans.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhuma ação cadastrada.</TableCell></TableRow>
+              {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8">Carregando...</TableCell></TableRow>
+                : plans.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhuma ação cadastrada.</TableCell></TableRow>
                 : (plans as (Plan & { companies?: { name: string } | null })[]).map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="max-w-xs"><div className="font-medium truncate">{p.what}</div>{p.companies?.name && <div className="text-xs text-muted-foreground">{p.companies.name}</div>}</TableCell>
                   <TableCell>{p.who ?? "—"}</TableCell>
                   <TableCell>{formatDateBR(p.when_date)}</TableCell>
+                  <TableCell className={`text-right text-sm ${p.days_remaining != null && p.days_remaining < 0 ? "text-destructive font-semibold" : ""}`}>
+                    {p.days_remaining == null ? "—" : `${p.days_remaining}d`}
+                  </TableCell>
                   <TableCell className="text-right">{p.how_much ? formatBRL(p.how_much) : "—"}</TableCell>
                   <TableCell><PriorityBadge p={p.priority} /></TableCell>
                   <TableCell><StatusBadge s={p.status} /></TableCell>
@@ -169,7 +173,7 @@ function PlanoAcaoPage() {
 }
 
 function StatusBadge({ s }: { s: string }) {
-  const map: Record<string, string> = { "Concluído": "bg-success text-success-foreground", "Em andamento": "bg-info text-info-foreground", "Pendente": "bg-warning text-warning-foreground", "Cancelado": "bg-muted text-muted-foreground" };
+  const map: Record<string, string> = { "Concluído": "bg-success text-success-foreground", "Em andamento": "bg-info text-info-foreground", "Pendente": "bg-warning text-warning-foreground", "Atrasado": "bg-destructive text-destructive-foreground", "Cancelado": "bg-muted text-muted-foreground" };
   return <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${map[s] ?? "bg-muted"}`}>{s}</span>;
 }
 function PriorityBadge({ p }: { p: string }) {
