@@ -25,6 +25,7 @@ import { Route as AuthenticatedContasPagarRouteImport } from './routes/_authenti
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedAnaliseEfoRouteImport } from './routes/_authenticated/analise-efo'
+import { Route as ApiPublicEfoExportTemplateRouteImport } from './routes/api/public/efo/export/template'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -110,6 +111,12 @@ const AuthenticatedAnaliseEfoRoute = AuthenticatedAnaliseEfoRouteImport.update({
   path: '/analise-efo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicEfoExportTemplateRoute =
+  ApiPublicEfoExportTemplateRouteImport.update({
+    id: '/api/public/efo/export/template',
+    path: '/api/public/efo/export/template',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
+  '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
+  '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -163,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
+  '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/plano-acao'
     | '/relatorios'
     | '/simulador'
+    | '/api/public/efo/export/template'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/plano-acao'
     | '/relatorios'
     | '/simulador'
+    | '/api/public/efo/export/template'
   id:
     | '__root__'
     | '/'
@@ -217,12 +229,14 @@ export interface FileRouteTypes {
     | '/_authenticated/plano-acao'
     | '/_authenticated/relatorios'
     | '/_authenticated/simulador'
+    | '/api/public/efo/export/template'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicEfoExportTemplateRoute: typeof ApiPublicEfoExportTemplateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -339,6 +353,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnaliseEfoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/efo/export/template': {
+      id: '/api/public/efo/export/template'
+      path: '/api/public/efo/export/template'
+      fullPath: '/api/public/efo/export/template'
+      preLoaderRoute: typeof ApiPublicEfoExportTemplateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -381,6 +402,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicEfoExportTemplateRoute: ApiPublicEfoExportTemplateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
