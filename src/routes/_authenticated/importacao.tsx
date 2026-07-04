@@ -252,12 +252,13 @@ function ImportPage() {
             : null;
           payload.push(toDbTransaction(r.data, user.id, companyId));
         }
-        // Somente registros com external_id usam upsert (índice único parcial existe apenas quando external_id IS NOT NULL).
+        // Deduplicação via coluna gerada dedupe_key (owner|source|external_id).
+        // Registros sem id_externo sempre inserem (dedupe_key = null).
         const withExt = payload.filter((p) => p.external_id);
         const withoutExt = payload.filter((p) => !p.external_id);
         if (withExt.length > 0) {
           const { error } = await supabase.from("financial_transactions").upsert(withExt as never, {
-            onConflict: "owner_id,source_system,external_id",
+            onConflict: "dedupe_key",
             ignoreDuplicates: false,
           });
           if (error) throw error;
