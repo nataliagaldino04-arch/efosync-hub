@@ -31,7 +31,7 @@ import {
 } from "recharts";
 import { formatBRL, formatPercent } from "@/lib/br-format";
 import { computeUpdated } from "@/lib/finance";
-import { RECEIVABLE_TYPES } from "@/lib/efo-schema";
+import { RECEIVABLE_TYPES, PAYABLE_TYPES } from "@/lib/efo-schema";
 
 export const Route = createFileRoute("/_authenticated/analise-efo")({
   head: () => ({ meta: [{ title: "Análise EFO — EFO" }] }),
@@ -39,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/analise-efo")({
 });
 
 const REVENUE_TYPES = RECEIVABLE_TYPES as unknown as string[];
+const EXPENSE_TYPES = PAYABLE_TYPES as unknown as string[];
 const FIXED_CATS = ["Aluguel", "Energia/Água", "Internet", "Salários", "Sistemas", "Contabilidade"];
 
 function EFOPage() {
@@ -93,12 +94,13 @@ function EFOPage() {
       row.juros += info.interest;
       if (REVENUE_TYPES.includes(String(t.movement_type))) {
         row.receitas += info.updated;
-      } else {
+      } else if (EXPENSE_TYPES.includes(String(t.movement_type))) {
         const cat = String(t.category ?? "");
         if (FIXED_CATS.includes(cat)) row.despesasFixas += info.updated;
         else row.despesasVariaveis += info.updated;
         row.despesas += info.updated;
       }
+      // Tipos como "Ajuste" não entram automaticamente no DRE.
     }
     for (const r of rows) {
       r.resultado = r.receitas - r.despesas;

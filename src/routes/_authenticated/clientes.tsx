@@ -76,7 +76,7 @@ function ClientesPage() {
         const { error } = await supabase.from("companies").update(input).eq("id", input.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("companies").insert(input as any);
+        const { error } = await supabase.from("companies").insert(input as never);
         if (error) throw error;
       }
     },

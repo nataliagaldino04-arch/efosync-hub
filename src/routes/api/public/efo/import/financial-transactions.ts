@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/efo/import/financial-transacti
           const { data, error } = await admin
             .from("financial_transactions")
             .upsert(withExt as never, {
-              onConflict: "owner_id,source_system,external_id",
+              onConflict: "dedupe_key",
               ignoreDuplicates: false,
             })
             .select("id");
@@ -100,6 +100,10 @@ export const Route = createFileRoute("/api/public/efo/import/financial-transacti
 
         return json({
           total: body.rows.length,
+          importados: created.length,
+          falharam: errors.length,
+          erros: errors,
+          // aliases em inglês para compatibilidade
           imported: created.length,
           failed: errors.length,
           errors,

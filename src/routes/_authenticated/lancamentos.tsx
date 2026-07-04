@@ -155,13 +155,16 @@ function LancamentosPage() {
               dueDate: input.due_date ?? null,
               paymentDate: input.payment_date ?? null,
             });
-      const payload = { ...input, status } as any;
+      const payload = { ...input, status } as Partial<Tx> & { id?: string };
       if (input.id) {
         const { id, ...rest } = payload;
-        const { error } = await supabase.from("financial_transactions").update(rest).eq("id", id);
+        const { error } = await supabase
+          .from("financial_transactions")
+          .update(rest as never)
+          .eq("id", id as string);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("financial_transactions").insert(payload);
+        const { error } = await supabase.from("financial_transactions").insert(payload as never);
         if (error) throw error;
       }
     },
@@ -234,7 +237,7 @@ function LancamentosPage() {
       source_system: editing?.source_system || "manual",
       notes: g("notes"),
     };
-    if (editing) (payload as any).id = editing.id;
+    if (editing) (payload as Partial<Tx> & { id?: string }).id = editing.id;
     upsert.mutate(payload);
   }
 
@@ -263,7 +266,12 @@ function LancamentosPage() {
     const { id, companies, ...rest } = t;
     void id;
     void companies;
-    upsert.mutate({ ...rest, paid_value: 0, payment_date: null, status: "Em aberto" } as any);
+    upsert.mutate({
+      ...rest,
+      paid_value: 0,
+      payment_date: null,
+      status: "Em aberto",
+    } as Partial<Tx>);
   }
 
   return (

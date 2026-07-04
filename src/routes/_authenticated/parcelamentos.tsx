@@ -132,7 +132,7 @@ function ParcelamentosPage() {
       const { data, error } = await supabase
         .from("financial_transactions")
         .select(
-          "id,description,due_date,original_value,paid_value,status,installment_number,installment_total,company_id,source_system,interest_rate_month,interest_type,payment_date,companies(name)",
+          "id,description,due_date,original_value,paid_value,status,installment_number,installment_total,company_id,source_system,interest_rate_month,interest_type,payment_date,installment_group_id,companies(name)",
         )
         .gt("installment_total", 1)
         .order("due_date", { ascending: true });
@@ -161,7 +161,11 @@ function ParcelamentosPage() {
     const byK = new Map<string, InstallmentRow[]>();
     for (const r of allInstallments) {
       const baseDesc = (r.description ?? "").replace(/\s*\(\d+\/\d+\)\s*$/, "");
-      const key = `${r.company_id ?? "-"}|${baseDesc}|${r.installment_total}`;
+      // Prioriza installment_group_id (contratos gerados após a migração).
+      // Fallback inclui source_system + primeira data para reduzir colisões em dados legados.
+      const key = r.installment_group_id
+        ? `g:${r.installment_group_id}`
+        : `${r.company_id ?? "-"}|${r.source_system ?? "-"}|${baseDesc}|${r.installment_total}|${r.due_date ?? ""}`;
       const cur = map.get(key) ?? {
         key,
         description: baseDesc || "(sem descrição)",
@@ -272,6 +276,7 @@ function ParcelamentosPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Não autenticado");
+      const groupId = crypto.randomUUID();
       const rows = schedule.map((row) => ({
         owner_id: user.id,
         company_id: companyId || null,
@@ -287,6 +292,7 @@ function ParcelamentosPage() {
         installment_total: n,
         status: "A vencer",
         source_system: "parcelamento",
+        installment_group_id: groupId,
       }));
       const { error } = await supabase.from("financial_transactions").insert(rows);
       if (error) throw error;
@@ -562,13 +568,21 @@ function ParcelamentosPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
+                            onClick={() => {
+                              const info = computeUpdated({
+                                principal: Number(r.original_value),
+                                monthlyRatePct: Number(r.interest_rate_month ?? 0),
+                                type: (r.interest_type as "simple" | "compound") || "simple",
+                                dueDate: r.due_date,
+                                paymentDate: null,
+                                paid: 0,
+                              });
                               payInstallment.mutate({
                                 id: r.id,
-                                paid: Number(r.original_value),
+                                paid: Number(info.updated.toFixed(2)),
                                 full: true,
-                              })
-                            }
+                              });
+                            }}
                           >
                             Pagar
                           </Button>
@@ -620,5 +634,6 @@ interface InstallmentRow {
   interest_rate_month: number | null;
   interest_type: string | null;
   payment_date: string | null;
+  installment_group_id: string | null;
   companies: { name: string } | null;
 }
