@@ -14,7 +14,374 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      action_plans_5w2h: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          how: string | null
+          how_much: number | null
+          id: string
+          owner_id: string
+          priority: string
+          status: string
+          updated_at: string
+          what: string | null
+          when_date: string | null
+          where_field: string | null
+          who: string | null
+          why: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          how?: string | null
+          how_much?: number | null
+          id?: string
+          owner_id?: string
+          priority?: string
+          status?: string
+          updated_at?: string
+          what?: string | null
+          when_date?: string | null
+          where_field?: string | null
+          who?: string | null
+          why?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          how?: string | null
+          how_much?: number | null
+          id?: string
+          owner_id?: string
+          priority?: string
+          status?: string
+          updated_at?: string
+          what?: string | null
+          when_date?: string | null
+          where_field?: string | null
+          who?: string | null
+          why?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_plans_5w2h_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      companies: {
+        Row: {
+          city: string | null
+          created_at: string
+          document: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          owner_id: string
+          phone: string | null
+          responsible: string | null
+          state: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          owner_id?: string
+          phone?: string | null
+          responsible?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          phone?: string | null
+          responsible?: string | null
+          state?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      efo_monthly_analysis: {
+        Row: {
+          cash_balance: number
+          company_id: string | null
+          created_at: string
+          fixed_expenses: number
+          id: string
+          interest_total: number
+          open_total: number
+          operational_result: number
+          overdue_total: number
+          owner_id: string
+          paid_total: number
+          period_month: number
+          period_year: number
+          product_revenue: number
+          service_revenue: number
+          total_expenses: number
+          total_revenue: number
+          variable_expenses: number
+        }
+        Insert: {
+          cash_balance?: number
+          company_id?: string | null
+          created_at?: string
+          fixed_expenses?: number
+          id?: string
+          interest_total?: number
+          open_total?: number
+          operational_result?: number
+          overdue_total?: number
+          owner_id?: string
+          paid_total?: number
+          period_month: number
+          period_year: number
+          product_revenue?: number
+          service_revenue?: number
+          total_expenses?: number
+          total_revenue?: number
+          variable_expenses?: number
+        }
+        Update: {
+          cash_balance?: number
+          company_id?: string | null
+          created_at?: string
+          fixed_expenses?: number
+          id?: string
+          interest_total?: number
+          open_total?: number
+          operational_result?: number
+          overdue_total?: number
+          owner_id?: string
+          paid_total?: number
+          period_month?: number
+          period_year?: number
+          product_revenue?: number
+          service_revenue?: number
+          total_expenses?: number
+          total_revenue?: number
+          variable_expenses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "efo_monthly_analysis_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_transactions: {
+        Row: {
+          category: string | null
+          company_id: string | null
+          competence_date: string | null
+          cost_center: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          external_id: string | null
+          id: string
+          installment_number: number | null
+          installment_total: number | null
+          installment_value: number
+          interest_rate_month: number
+          interest_type: string
+          movement_type: string
+          notes: string | null
+          original_value: number
+          owner_id: string
+          paid_value: number
+          payment_date: string | null
+          payment_method: string | null
+          source_system: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          company_id?: string | null
+          competence_date?: string | null
+          cost_center?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          id?: string
+          installment_number?: number | null
+          installment_total?: number | null
+          installment_value?: number
+          interest_rate_month?: number
+          interest_type?: string
+          movement_type: string
+          notes?: string | null
+          original_value?: number
+          owner_id?: string
+          paid_value?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          source_system?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          company_id?: string | null
+          competence_date?: string | null
+          cost_center?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          id?: string
+          installment_number?: number | null
+          installment_total?: number | null
+          installment_value?: number
+          interest_rate_month?: number
+          interest_type?: string
+          movement_type?: string
+          notes?: string | null
+          original_value?: number
+          owner_id?: string
+          paid_value?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          source_system?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_batches: {
+        Row: {
+          created_at: string
+          error_rows: number
+          file_name: string | null
+          id: string
+          imported_rows: number
+          owner_id: string
+          source_system: string | null
+          status: string
+          total_rows: number
+        }
+        Insert: {
+          created_at?: string
+          error_rows?: number
+          file_name?: string | null
+          id?: string
+          imported_rows?: number
+          owner_id?: string
+          source_system?: string | null
+          status?: string
+          total_rows?: number
+        }
+        Update: {
+          created_at?: string
+          error_rows?: number
+          file_name?: string | null
+          id?: string
+          imported_rows?: number
+          owner_id?: string
+          source_system?: string | null
+          status?: string
+          total_rows?: number
+        }
+        Relationships: []
+      }
+      import_errors: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          error_message: string | null
+          field_name: string | null
+          id: string
+          owner_id: string
+          raw_data: Json | null
+          row_number: number | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          field_name?: string | null
+          id?: string
+          owner_id?: string
+          raw_data?: Json | null
+          row_number?: number | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          field_name?: string | null
+          id?: string
+          owner_id?: string
+          raw_data?: Json | null
+          row_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_errors_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
