@@ -49,7 +49,11 @@ export const HEADER_ALIASES: Record<string, EfoHeader> = {
   valor_parcela: "valor_parcela_pmt",
   parcela: "valor_parcela_pmt",
   pmt: "valor_parcela_pmt",
-  pago: "valor_pago",
+  // "pago" na planilha original significa STATUS (pago/sim/não). Aliases de valor pago devem ser explícitos.
+  pago: "status",
+  valor_pago: "valor_pago",
+  pago_valor: "valor_pago",
+  valor_quitado: "valor_pago",
   taxa: "taxa_juros_mes",
   juros_mes: "taxa_juros_mes",
   juros: "tipo_juros",
@@ -109,6 +113,7 @@ export const PAYABLE_TYPES: MovementType[] = ["Despesa", "Conta a Pagar"];
 export const REQUIRE_DUE_DATE: MovementType[] = ["Conta a Receber", "Conta a Pagar", "Parcelamento"];
 
 export const STATUSES = ["Pago", "Parcial", "Vencido", "A vencer", "Em aberto", "Cancelado"] as const;
+const STATUS_SET = new Set<string>(STATUSES as unknown as string[]);
 
 export interface EfoRow {
   id_externo: string | null;
@@ -152,19 +157,25 @@ export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeO
   const valor_original = parseBRNumber(get("valor_original") as string | number);
   if (!(valor_original > 0)) errors.push("valor_original deve ser > 0");
 
-  const data_vencimento = parseBRDate(get("data_vencimento") as string, opts.defaultYear);
-  if (get("data_vencimento") && !data_vencimento) errors.push("data_vencimento inválida");
+  const rawVenc = get("data_vencimento");
+  const data_vencimento = parseBRDate(rawVenc as string, opts.defaultYear);
+  if (rawVenc && !data_vencimento) errors.push(`data_vencimento inválida: ${String(rawVenc)}`);
   if (!data_vencimento && REQUIRE_DUE_DATE.includes(tipo_movimento)) errors.push("data_vencimento obrigatória para " + tipo_movimento);
 
-  const data_competencia = parseBRDate(get("data_competencia") as string, opts.defaultYear);
-  if (get("data_competencia") && !data_competencia) errors.push("data_competencia inválida");
-  const data_pagamento = parseBRDate(get("data_pagamento") as string, opts.defaultYear);
-  if (get("data_pagamento") && !data_pagamento) errors.push("data_pagamento inválida");
+  const rawComp = get("data_competencia");
+  const data_competencia = parseBRDate(rawComp as string, opts.defaultYear);
+  if (rawComp && !data_competencia) errors.push(`data_competencia inválida: ${String(rawComp)}`);
+  const rawPag = get("data_pagamento");
+  const data_pagamento = parseBRDate(rawPag as string, opts.defaultYear);
+  if (rawPag && !data_pagamento) errors.push(`data_pagamento inválida: ${String(rawPag)}`);
 
   const taxa_juros_mes = parseBRNumber(get("taxa_juros_mes") as string | number);
   if (taxa_juros_mes < 0) errors.push("taxa_juros_mes negativa");
   const valor_pago = parseBRNumber(get("valor_pago") as string | number);
   if (valor_pago < 0) errors.push("valor_pago negativo");
+  const valor_parcela_pmt = parseBRNumber(get("valor_parcela_pmt") as string | number);
+  if (valor_parcela_pmt < 0) errors.push("valor_parcela_pmt negativo");
+  if (valor_pago > valor_original * 5) errors.push("valor_pago maior que valor atualizado esperado");
 
   const juRaw = String(get("tipo_juros") ?? "simple").toLowerCase().trim();
   let tipo_juros: "simple" | "compound" = "simple";
@@ -172,14 +183,31 @@ export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeO
   else if (juRaw === "compound" || juRaw === "composto") tipo_juros = "compound";
   else errors.push(`tipo_juros inválido: ${juRaw}`);
 
-  const parcela_numero = Number(get("parcela_numero")) || null;
-  const parcela_total = Number(get("parcela_total")) || null;
+  const pnRaw = get("parcela_numero");
+  const ptRaw = get("parcela_total");
+  const parcela_numero = pnRaw === "" || pnRaw == null ? null : Number(pnRaw);
+  const parcela_total = ptRaw === "" || ptRaw == null ? null : Number(ptRaw);
+  if (parcela_numero !== null && (!Number.isFinite(parcela_numero) || parcela_numero < 1)) errors.push("parcela_numero inválido");
+  if (parcela_total !== null && (!Number.isFinite(parcela_total) || parcela_total < 1)) errors.push("parcela_total inválido");
   if (parcela_numero && parcela_total && parcela_numero > parcela_total) errors.push("parcela_numero > parcela_total");
 
   const rawStatus = str(get("status"));
   let status = rawStatus ?? "Em aberto";
-  if (rawStatus && parseBRBoolean(rawStatus)) status = "Pago";
-  else if (rawStatus && ["não", "nao", "no", "0"].includes(rawStatus.toLowerCase())) status = "Em aberto";
+  if (rawStatus) {
+    const low = rawStatus.toLowerCase();
+    if (parseBRBoolean(rawStatus)) status = "Pago";
+    else if (["não", "nao", "no", "0", "false"].includes(low)) status = "Em aberto";
+    else if (STATUS_SET.has(rawStatus)) status = rawStatus;
+    else {
+      // Normaliza capitalização comum
+      const cap = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase();
+      if (STATUS_SET.has(cap)) status = cap;
+      else errors.push(`status inválido: ${rawStatus}`);
+    }
+  }
+  // Coerência: se marcou pago mas não informou valor_pago, usa valor_original
+  const finalPaid = status === "Pago" && valor_pago === 0 ? valor_original : valor_pago;
+  if (status === "Pago" && finalPaid < valor_original) errors.push("status Pago mas valor_pago menor que valor_original");
 
   const row: EfoRow = {
     id_externo: str(get("id_externo")),
@@ -190,8 +218,8 @@ export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeO
     centro_custo: str(get("centro_custo")),
     descricao: str(get("descricao")),
     valor_original,
-    valor_parcela_pmt: parseBRNumber(get("valor_parcela_pmt") as string | number),
-    valor_pago,
+    valor_parcela_pmt,
+    valor_pago: finalPaid,
     taxa_juros_mes,
     tipo_juros,
     data_competencia,
