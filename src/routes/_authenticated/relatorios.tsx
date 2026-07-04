@@ -36,7 +36,7 @@ import { computeUpdated } from "@/lib/finance";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
-import { RECEIVABLE_TYPES } from "@/lib/efo-schema";
+import { RECEIVABLE_TYPES, PAYABLE_TYPES } from "@/lib/efo-schema";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatórios — EFO" }] }),
@@ -85,11 +85,13 @@ function ReportsPage() {
           paymentDate: (t.payment_date as string) ?? null,
           paid: Number(t.paid_value),
         });
+        const type = String(t.movement_type);
         return {
           ...info,
           due_date: t.due_date as string | null,
           companies: t.companies,
-          isRevenue: (RECEIVABLE_TYPES as unknown as string[]).includes(String(t.movement_type)),
+          isRevenue: (RECEIVABLE_TYPES as unknown as string[]).includes(type),
+          isExpense: (PAYABLE_TYPES as unknown as string[]).includes(type),
         };
       }),
     [txs],
@@ -104,7 +106,8 @@ function ReportsPage() {
       const d = String(t.due_date).slice(0, 7);
       const cur = map.get(d) ?? { mes: d, receitas: 0, despesas: 0, saldo: 0 };
       if (t.isRevenue) cur.receitas += t.updated;
-      else cur.despesas += t.updated;
+      else if (t.isExpense) cur.despesas += t.updated;
+      // Ajuste e outros tipos não entram automaticamente
       cur.saldo = cur.receitas - cur.despesas;
       map.set(d, cur);
     }
@@ -124,6 +127,8 @@ function ReportsPage() {
       }
     >();
     for (const t of enriched) {
+      // Ranking considera apenas recebíveis em aberto
+      if (!t.isRevenue || t.open <= 0) continue;
       const name = t.companies?.name ?? "Sem cliente";
       const cur = map.get(name) ?? {
         cliente: name,
@@ -195,7 +200,7 @@ function ReportsPage() {
   }, [enriched]);
 
   const totRec = enriched.filter((t) => t.isRevenue).reduce((s, t) => s + t.updated, 0);
-  const totDesp = enriched.filter((t) => !t.isRevenue).reduce((s, t) => s + t.updated, 0);
+  const totDesp = enriched.filter((t) => t.isExpense).reduce((s, t) => s + t.updated, 0);
 
   return (
     <>
