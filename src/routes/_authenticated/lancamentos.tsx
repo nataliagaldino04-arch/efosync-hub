@@ -164,9 +164,7 @@ function LancamentosPage() {
           .eq("id", id as string);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from("financial_transactions")
-          .insert(payload as never);
+        const { error } = await supabase.from("financial_transactions").insert(payload as never);
         if (error) throw error;
       }
     },
