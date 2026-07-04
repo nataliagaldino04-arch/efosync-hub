@@ -164,6 +164,10 @@ function DashboardPage() {
         <Stat icon={<Wallet className="h-4 w-4" />} label="Saldo operacional" value={formatBRL(stats.operational)} tone={stats.operational >= 0 ? "success" : "destructive"} />
         <Stat icon={<Coins className="h-4 w-4" />} label="Juros acumulados" value={formatBRL(stats.interest)} tone="warning" />
         <Stat icon={<TrendingUp className="h-4 w-4" />} label="Inadimplência" value={formatPercent(stats.overdueRate * 100)} tone={stats.overdueRate > 0.1 ? "destructive" : "info"} />
+        <Stat icon={<Coins className="h-4 w-4" />} label="Ticket médio" value={formatBRL(stats.avgTicket)} tone="info" />
+        <Stat icon={<CheckCircle2 className="h-4 w-4" />} label="Taxa de recebimento" value={formatPercent(stats.collectionRate * 100)} tone={stats.collectionRate >= 0.8 ? "success" : "warning"} />
+        <Stat icon={<Clock className="h-4 w-4" />} label="DSO (dias médios)" value={`${stats.dso.toFixed(0)}d`} tone={stats.dso > 45 ? "destructive" : "info"} />
+        <Stat icon={<TrendingUp className="h-4 w-4" />} label="Margem operacional" value={formatPercent(stats.margin * 100)} tone={stats.margin >= 0 ? "success" : "destructive"} />
       </div>
 
       <div className="grid gap-4 mt-6 lg:grid-cols-2">
@@ -290,6 +294,9 @@ function computeStats(txs: Tx[]) {
   let expenses = 0;
   let revenues = 0;
   let interest = 0;
+  let receivableCount = 0;
+  let dsoSum = 0;
+  let dsoCount = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -309,17 +316,28 @@ function computeStats(txs: Tx[]) {
       revenues += info.principal;
       receivable += info.open + Number(t.paid_value);
       paid += Number(t.paid_value);
+      receivableCount += 1;
       if (t.due_date) {
         const due = new Date(t.due_date + "T00:00:00");
         if (due < today && info.open > 0) overdue += info.open;
         else if (info.open > 0) upcoming += info.open;
+        if (t.payment_date) {
+          const pay = new Date(t.payment_date + "T00:00:00");
+          const diff = Math.max(0, Math.round((pay.getTime() - due.getTime()) / 86400000));
+          dsoSum += diff;
+          dsoCount += 1;
+        }
       }
     }
     if (isExpense) expenses += info.principal;
   }
   const operational = revenues - expenses;
   const overdueRate = receivable > 0 ? overdue / receivable : 0;
-  return { receivable, paid, overdue, upcoming, expenses, revenues, operational, interest, overdueRate, open: receivable - paid };
+  const avgTicket = receivableCount > 0 ? revenues / receivableCount : 0;
+  const collectionRate = receivable > 0 ? paid / receivable : 0;
+  const dso = dsoCount > 0 ? dsoSum / dsoCount : 0;
+  const margin = revenues > 0 ? operational / revenues : 0;
+  return { receivable, paid, overdue, upcoming, expenses, revenues, operational, interest, overdueRate, open: receivable - paid, avgTicket, collectionRate, dso, margin };
 }
 
 function groupMonthly(txs: Tx[]) {

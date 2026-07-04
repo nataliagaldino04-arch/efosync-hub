@@ -12,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { calcPMT } from "@/lib/finance";
 import { formatBRL, formatDateBR, parseBRNumber } from "@/lib/br-format";
+import { Badge } from "@/components/ui/badge";
+import { Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/parcelamentos")({
   head: () => ({ meta: [{ title: "Parcelamentos — EFO" }] }),
@@ -62,6 +64,45 @@ function ParcelamentosPage() {
   }, [p, r, n, pmt, firstDue, type]);
 
   const totInterest = schedule.reduce((s, x) => s + x.interestPart, 0);
+
+  // Listagem de parcelamentos existentes agrupados
+  const { data: groups = [] } = useQuery({
+    queryKey: ["installment-groups"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financial_transactions")
+        .select("id,description,due_date,original_value,paid_value,status,installment_number,installment_total,company_id,source_system,companies(name)")
+        .gt("installment_total", 1)
+        .order("due_date", { ascending: false });
+      if (error) throw error;
+      type Row = { id: string; description: string | null; due_date: string | null; original_value: number; paid_value: number; status: string; installment_number: number; installment_total: number; company_id: string | null; source_system: string | null; companies: { name: string } | null };
+      const map = new Map<string, { key: string; description: string; company: string; total: number; count: number; sum: number; paid: number; firstDue: string | null; source: string | null }>();
+      for (const r of (data ?? []) as Row[]) {
+        const baseDesc = (r.description ?? "").replace(/\s*\(\d+\/\d+\)\s*$/, "");
+        const key = `${r.company_id ?? "-"}|${baseDesc}|${r.installment_total}`;
+        const cur = map.get(key) ?? { key, description: baseDesc || "(sem descrição)", company: r.companies?.name ?? "—", total: r.installment_total, count: 0, sum: 0, paid: 0, firstDue: r.due_date, source: r.source_system };
+        cur.count += 1;
+        cur.sum += Number(r.original_value);
+        cur.paid += Number(r.paid_value);
+        if (r.due_date && (!cur.firstDue || r.due_date < cur.firstDue)) cur.firstDue = r.due_date;
+        map.set(key, cur);
+      }
+      return Array.from(map.values()).slice(0, 20);
+    },
+  });
+
+  const deleteGroup = useMutation({
+    mutationFn: async (g: { description: string; total: number }) => {
+      const { error } = await supabase
+        .from("financial_transactions")
+        .delete()
+        .like("description", `${g.description}%`)
+        .eq("installment_total", g.total);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries(); toast.success("Parcelamento removido"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const generate = useMutation({
     mutationFn: async () => {
@@ -166,6 +207,46 @@ function ParcelamentosPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-4">
+        <CardHeader><CardTitle>Parcelamentos existentes</CardTitle></CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>1º vencimento</TableHead>
+                <TableHead className="text-right">Parcelas</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-right">Pago</TableHead>
+                <TableHead>Origem</TableHead>
+                <TableHead className="w-16"></TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {groups.length === 0 ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">Nenhum parcelamento cadastrado.</TableCell></TableRow>
+                ) : groups.map((g) => (
+                  <TableRow key={g.key}>
+                    <TableCell className="font-medium max-w-xs truncate">{g.description}</TableCell>
+                    <TableCell>{g.company}</TableCell>
+                    <TableCell>{formatDateBR(g.firstDue)}</TableCell>
+                    <TableCell className="text-right">{g.count}/{g.total}</TableCell>
+                    <TableCell className="text-right font-medium">{formatBRL(g.sum)}</TableCell>
+                    <TableCell className="text-right text-success">{formatBRL(g.paid)}</TableCell>
+                    <TableCell><Badge variant="outline">{g.source ?? "manual"}</Badge></TableCell>
+                    <TableCell>
+                      <Button size="icon" variant="ghost" title="Remover parcelamento" onClick={() => { if (confirm(`Remover todas as ${g.count} parcelas de "${g.description}"?`)) deleteGroup.mutate({ description: g.description, total: g.total }); }}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }

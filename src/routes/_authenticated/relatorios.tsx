@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import { formatBRL } from "@/lib/br-format";
 import { computeUpdated } from "@/lib/finance";
+import { Button } from "@/components/ui/button";
+import { Target } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatórios — EFO" }] }),
@@ -22,6 +25,7 @@ const firstDay = new Date(today.getFullYear(), today.getMonth() - 5, 1).toISOStr
 const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().slice(0, 10);
 
 function ReportsPage() {
+  const navigate = useNavigate();
   const [from, setFrom] = useState(firstDay);
   const [to, setTo] = useState(lastDay);
   const [companyId, setCompanyId] = useState<string>("all");
@@ -69,10 +73,10 @@ function ReportsPage() {
   }, [enriched]);
 
   const byClient = useMemo(() => {
-    const map = new Map<string, { cliente: string; total: number; aberto: number; juros: number; qtd: number }>();
+    const map = new Map<string, { cliente: string; company_id: string | null; total: number; aberto: number; juros: number; qtd: number }>();
     for (const t of enriched) {
       const name = t.companies?.name ?? "Sem cliente";
-      const cur = map.get(name) ?? { cliente: name, total: 0, aberto: 0, juros: 0, qtd: 0 };
+      const cur = map.get(name) ?? { cliente: name, company_id: null, total: 0, aberto: 0, juros: 0, qtd: 0 };
       cur.total += t.updated;
       cur.aberto += t.open;
       cur.juros += t.interest;
@@ -81,6 +85,34 @@ function ReportsPage() {
     }
     return Array.from(map.values()).sort((a, b) => b.aberto - a.aberto);
   }, [enriched]);
+
+  async function createAction(c: { cliente: string; aberto: number; juros: number; qtd: number }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Não autenticado"); return; }
+    let companyId: string | null = null;
+    if (c.cliente !== "Sem cliente") {
+      const found = (companies as { id: string; name: string }[]).find((x) => x.name === c.cliente);
+      companyId = found?.id ?? null;
+    }
+    const when = new Date();
+    when.setDate(when.getDate() + 7);
+    const { error } = await supabase.from("action_plans_5w2h").insert({
+      owner_id: user.id,
+      company_id: companyId,
+      what: `Reduzir inadimplência de ${c.cliente}`,
+      why: `${c.qtd} lançamento(s) em aberto totalizando ${formatBRL(c.aberto)} (juros: ${formatBRL(c.juros)}).`,
+      who: "Financeiro",
+      where_field: "Contas a Receber",
+      how: "Contatar cliente, negociar prazos e registrar acordos.",
+      how_much: c.aberto,
+      when_date: when.toISOString().slice(0, 10),
+      status: "Pendente",
+      priority: c.aberto > 5000 ? "Alta" : "Normal",
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Ação 5W2H criada");
+    navigate({ to: "/plano-acao" });
+  }
 
   const aging = useMemo(() => {
     const buckets = [{ faixa: "0", min: 0, max: 0, valor: 0 }, { faixa: "1-30d", min: 1, max: 30, valor: 0 }, { faixa: "31-60d", min: 31, max: 60, valor: 0 }, { faixa: "61-90d", min: 61, max: 90, valor: 0 }, { faixa: "90d+", min: 91, max: Infinity, valor: 0 }];
@@ -160,6 +192,7 @@ function ReportsPage() {
                 <TableHead className="text-right">Total atualizado</TableHead>
                 <TableHead className="text-right">Juros</TableHead>
                 <TableHead className="text-right">Em aberto</TableHead>
+                <TableHead className="w-32"></TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {byClient.map((c) => (
@@ -169,6 +202,13 @@ function ReportsPage() {
                     <TableCell className="text-right">{formatBRL(c.total)}</TableCell>
                     <TableCell className="text-right text-warning">{formatBRL(c.juros)}</TableCell>
                     <TableCell className="text-right font-medium">{formatBRL(c.aberto)}</TableCell>
+                    <TableCell>
+                      {c.aberto > 0 && (
+                        <Button size="sm" variant="outline" onClick={() => createAction(c)}>
+                          <Target className="h-3.5 w-3.5 mr-1" />5W2H
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
