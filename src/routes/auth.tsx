@@ -14,7 +14,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Entrar — EFO" },
-      { name: "description", content: "Acesse sua conta EFO para gerenciar clientes, lançamentos e relatórios financeiros." },
+      {
+        name: "description",
+        content:
+          "Acesse sua conta EFO para gerenciar clientes, lançamentos e relatórios financeiros.",
+      },
     ],
   }),
   component: AuthPage,
@@ -72,8 +76,12 @@ function AuthPage() {
           </div>
         </div>
         <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">Substitua suas planilhas por clareza.</h1>
-          <p className="text-sidebar-foreground/80 text-lg">Lançamentos, juros automáticos, parcelamentos, dashboard e relatórios em um só lugar.</p>
+          <h1 className="text-4xl font-bold tracking-tight">
+            Substitua suas planilhas por clareza.
+          </h1>
+          <p className="text-sidebar-foreground/80 text-lg">
+            Lançamentos, juros automáticos, parcelamentos, dashboard e relatórios em um só lugar.
+          </p>
         </div>
         <div className="text-xs opacity-60">© {new Date().getFullYear()} EFO</div>
       </div>
@@ -98,7 +106,13 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="l-password">Senha</Label>
-                    <Input id="l-password" name="password" type="password" required autoComplete="current-password" />
+                    <Input
+                      id="l-password"
+                      name="password"
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                    />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Entrando..." : "Entrar"}
@@ -113,7 +127,14 @@ function AuthPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="s-password">Senha</Label>
-                    <Input id="s-password" name="password" type="password" required minLength={6} autoComplete="new-password" />
+                    <Input
+                      id="s-password"
+                      name="password"
+                      type="password"
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                    />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Criando..." : "Criar conta"}

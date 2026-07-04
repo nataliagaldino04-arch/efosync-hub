@@ -6,7 +6,13 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatBRL, formatPercent } from "@/lib/br-format";
 import { computeUpdated } from "@/lib/finance";
 import { PAYABLE_TYPES, RECEIVABLE_TYPES } from "@/lib/efo-schema";
@@ -70,7 +76,8 @@ function DashboardPage() {
 
   const { data: companies = [] } = useQuery({
     queryKey: ["dashboard-companies"],
-    queryFn: async () => (await supabase.from("companies").select("id,name").order("name")).data ?? [],
+    queryFn: async () =>
+      (await supabase.from("companies").select("id,name").order("name")).data ?? [],
   });
 
   const { data: rawTxs = [], isLoading } = useQuery({
@@ -87,18 +94,25 @@ function DashboardPage() {
     },
   });
 
-  const txs = useMemo(() => rawTxs.filter((t) => {
-    if (companyId !== "__all__" && t.company_id !== companyId) return false;
-    if (status !== "__all__" && t.status !== status) return false;
-    if (movType !== "__all__" && t.movement_type !== movType) return false;
-    if (category && !(t.category ?? "").toLowerCase().includes(category.toLowerCase())) return false;
-    if (costCenter && !(t.cost_center ?? "").toLowerCase().includes(costCenter.toLowerCase())) return false;
-    if (source && !(t.source_system ?? "").toLowerCase().includes(source.toLowerCase())) return false;
-    const ref = t.competence_date || t.due_date;
-    if (from && (!ref || ref < from)) return false;
-    if (to && (!ref || ref > to)) return false;
-    return true;
-  }), [rawTxs, companyId, status, movType, category, costCenter, source, from, to]);
+  const txs = useMemo(
+    () =>
+      rawTxs.filter((t) => {
+        if (companyId !== "__all__" && t.company_id !== companyId) return false;
+        if (status !== "__all__" && t.status !== status) return false;
+        if (movType !== "__all__" && t.movement_type !== movType) return false;
+        if (category && !(t.category ?? "").toLowerCase().includes(category.toLowerCase()))
+          return false;
+        if (costCenter && !(t.cost_center ?? "").toLowerCase().includes(costCenter.toLowerCase()))
+          return false;
+        if (source && !(t.source_system ?? "").toLowerCase().includes(source.toLowerCase()))
+          return false;
+        const ref = t.competence_date || t.due_date;
+        if (from && (!ref || ref < from)) return false;
+        if (to && (!ref || ref > to)) return false;
+        return true;
+      }),
+    [rawTxs, companyId, status, movType, category, costCenter, source, from, to],
+  );
 
   const stats = computeStats(txs);
   const monthly = groupMonthly(txs);
@@ -118,56 +132,174 @@ function DashboardPage() {
       />
 
       <Card className="mb-4">
-        <CardHeader><CardTitle className="text-base">Filtros</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base">Filtros</CardTitle>
+        </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-1"><Label className="text-xs">Cliente</Label>
+          <div className="space-y-1">
+            <Label className="text-xs">Cliente</Label>
             <Select value={companyId} onValueChange={setCompanyId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Todos</SelectItem>
-                {(companies as { id: string; name: string }[]).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                {(companies as { id: string; name: string }[]).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1"><Label className="text-xs">De</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">Até</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">Status</Label>
+          <div className="space-y-1">
+            <Label className="text-xs">De</Label>
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Até</Label>
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Status</Label>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Todos</SelectItem>
-                {["Pago","Parcial","Vencido","A vencer","Em aberto","Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {["Pago", "Parcial", "Vencido", "A vencer", "Em aberto", "Cancelado"].map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1"><Label className="text-xs">Tipo</Label>
+          <div className="space-y-1">
+            <Label className="text-xs">Tipo</Label>
             <Select value={movType} onValueChange={setMovType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__all__">Todos</SelectItem>
-                {["Receita","Despesa","Conta a Receber","Conta a Pagar","Parcelamento","Juros","Ajuste"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                {[
+                  "Receita",
+                  "Despesa",
+                  "Conta a Receber",
+                  "Conta a Pagar",
+                  "Parcelamento",
+                  "Juros",
+                  "Ajuste",
+                ].map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1"><Label className="text-xs">Categoria</Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Filtrar" /></div>
-          <div className="space-y-1"><Label className="text-xs">Centro de custo</Label><Input value={costCenter} onChange={(e) => setCostCenter(e.target.value)} placeholder="Filtrar" /></div>
-          <div className="space-y-1"><Label className="text-xs">Origem</Label><Input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Filtrar" /></div>
+          <div className="space-y-1">
+            <Label className="text-xs">Categoria</Label>
+            <Input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Filtrar"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Centro de custo</Label>
+            <Input
+              value={costCenter}
+              onChange={(e) => setCostCenter(e.target.value)}
+              placeholder="Filtrar"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Origem</Label>
+            <Input
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder="Filtrar"
+            />
+          </div>
         </CardContent>
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={<ArrowDownRight className="h-4 w-4" />} label="Total a receber" value={formatBRL(stats.receivable)} tone="info" />
-        <Stat icon={<CheckCircle2 className="h-4 w-4" />} label="Total recebido" value={formatBRL(stats.paid)} tone="success" />
-        <Stat icon={<AlertTriangle className="h-4 w-4" />} label="Total vencido" value={formatBRL(stats.overdue)} tone="destructive" />
-        <Stat icon={<Clock className="h-4 w-4" />} label="A vencer" value={formatBRL(stats.upcoming)} tone="warning" />
-        <Stat icon={<ArrowUpRight className="h-4 w-4" />} label="Total de despesas" value={formatBRL(stats.expenses)} tone="destructive" />
-        <Stat icon={<Wallet className="h-4 w-4" />} label="Saldo operacional" value={formatBRL(stats.operational)} tone={stats.operational >= 0 ? "success" : "destructive"} />
-        <Stat icon={<Coins className="h-4 w-4" />} label="Juros acumulados" value={formatBRL(stats.interest)} tone="warning" />
-        <Stat icon={<TrendingUp className="h-4 w-4" />} label="Inadimplência" value={formatPercent(stats.overdueRate * 100)} tone={stats.overdueRate > 0.1 ? "destructive" : "info"} />
-        <Stat icon={<Coins className="h-4 w-4" />} label="Ticket médio" value={formatBRL(stats.avgTicket)} tone="info" />
-        <Stat icon={<CheckCircle2 className="h-4 w-4" />} label="Taxa de recebimento" value={formatPercent(stats.collectionRate * 100)} tone={stats.collectionRate >= 0.8 ? "success" : "warning"} />
-        <Stat icon={<Clock className="h-4 w-4" />} label="DSO (dias médios)" value={`${stats.dso.toFixed(0)}d`} tone={stats.dso > 45 ? "destructive" : "info"} />
-        <Stat icon={<TrendingUp className="h-4 w-4" />} label="Margem operacional" value={formatPercent(stats.margin * 100)} tone={stats.margin >= 0 ? "success" : "destructive"} />
+        <Stat
+          icon={<ArrowDownRight className="h-4 w-4" />}
+          label="Total a receber"
+          value={formatBRL(stats.receivable)}
+          tone="info"
+        />
+        <Stat
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          label="Total recebido"
+          value={formatBRL(stats.paid)}
+          tone="success"
+        />
+        <Stat
+          icon={<AlertTriangle className="h-4 w-4" />}
+          label="Total vencido"
+          value={formatBRL(stats.overdue)}
+          tone="destructive"
+        />
+        <Stat
+          icon={<Clock className="h-4 w-4" />}
+          label="A vencer"
+          value={formatBRL(stats.upcoming)}
+          tone="warning"
+        />
+        <Stat
+          icon={<ArrowUpRight className="h-4 w-4" />}
+          label="Total de despesas"
+          value={formatBRL(stats.expenses)}
+          tone="destructive"
+        />
+        <Stat
+          icon={<Wallet className="h-4 w-4" />}
+          label="Saldo operacional"
+          value={formatBRL(stats.operational)}
+          tone={stats.operational >= 0 ? "success" : "destructive"}
+        />
+        <Stat
+          icon={<Coins className="h-4 w-4" />}
+          label="Juros acumulados"
+          value={formatBRL(stats.interest)}
+          tone="warning"
+        />
+        <Stat
+          icon={<TrendingUp className="h-4 w-4" />}
+          label="Inadimplência"
+          value={formatPercent(stats.overdueRate * 100)}
+          tone={stats.overdueRate > 0.1 ? "destructive" : "info"}
+        />
+        <Stat
+          icon={<Coins className="h-4 w-4" />}
+          label="Ticket médio"
+          value={formatBRL(stats.avgTicket)}
+          tone="info"
+        />
+        <Stat
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          label="Taxa de recebimento"
+          value={formatPercent(stats.collectionRate * 100)}
+          tone={stats.collectionRate >= 0.8 ? "success" : "warning"}
+        />
+        <Stat
+          icon={<Clock className="h-4 w-4" />}
+          label="DSO (dias médios)"
+          value={`${stats.dso.toFixed(0)}d`}
+          tone={stats.dso > 45 ? "destructive" : "info"}
+        />
+        <Stat
+          icon={<TrendingUp className="h-4 w-4" />}
+          label="Margem operacional"
+          value={formatPercent(stats.margin * 100)}
+          tone={stats.margin >= 0 ? "success" : "destructive"}
+        />
       </div>
 
       <div className="grid gap-4 mt-6 lg:grid-cols-2">
@@ -183,8 +315,18 @@ function DashboardPage() {
                 <YAxis fontSize={12} />
                 <Tooltip formatter={(v: number) => formatBRL(v)} />
                 <Legend />
-                <Bar dataKey="receitas" name="Receitas" fill="var(--success)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="despesas" name="Despesas" fill="var(--destructive)" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="receitas"
+                  name="Receitas"
+                  fill="var(--success)"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="despesas"
+                  name="Despesas"
+                  fill="var(--destructive)"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -201,7 +343,13 @@ function DashboardPage() {
                 <XAxis dataKey="month" fontSize={12} />
                 <YAxis fontSize={12} />
                 <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Line type="monotone" dataKey="saldo" name="Saldo" stroke="var(--primary)" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  dataKey="saldo"
+                  name="Saldo"
+                  stroke="var(--primary)"
+                  strokeWidth={2}
+                />
               </RLineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -216,7 +364,10 @@ function DashboardPage() {
               <PieChart>
                 <Pie data={paidVsOpen} dataKey="value" nameKey="name" outerRadius={90} label>
                   {paidVsOpen.map((_, i) => (
-                    <Cell key={i} fill={["var(--success)", "var(--info)", "var(--destructive)"][i]} />
+                    <Cell
+                      key={i}
+                      fill={["var(--success)", "var(--info)", "var(--destructive)"][i]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v: number) => formatBRL(v)} />
@@ -337,11 +488,29 @@ function computeStats(txs: Tx[]) {
   const collectionRate = receivable > 0 ? paid / receivable : 0;
   const dso = dsoCount > 0 ? dsoSum / dsoCount : 0;
   const margin = revenues > 0 ? operational / revenues : 0;
-  return { receivable, paid, overdue, upcoming, expenses, revenues, operational, interest, overdueRate, open: receivable - paid, avgTicket, collectionRate, dso, margin };
+  return {
+    receivable,
+    paid,
+    overdue,
+    upcoming,
+    expenses,
+    revenues,
+    operational,
+    interest,
+    overdueRate,
+    open: receivable - paid,
+    avgTicket,
+    collectionRate,
+    dso,
+    margin,
+  };
 }
 
 function groupMonthly(txs: Tx[]) {
-  const map = new Map<string, { month: string; receitas: number; despesas: number; saldo: number }>();
+  const map = new Map<
+    string,
+    { month: string; receitas: number; despesas: number; saldo: number }
+  >();
   for (const t of txs) {
     const d = t.competence_date || t.due_date;
     if (!d) continue;
