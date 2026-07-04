@@ -8,6 +8,7 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { computeUpdated } from "@/lib/finance";
+import { EFO_HEADERS, toExportRow } from "@/lib/efo-schema";
 
 export const Route = createFileRoute("/_authenticated/exportacao")({
   head: () => ({ meta: [{ title: "Exportação — EFO" }] }),
@@ -25,7 +26,7 @@ function ExportPage() {
   });
 
   function exportAll(format: "xlsx" | "csv") {
-    const rows = (txs as Array<Record<string, unknown> & { companies?: { name: string } | null }>).map((t) => {
+    const rows = (txs as Array<Record<string, unknown> & { companies?: { name: string; document?: string } | null }>).map((t) => {
       const info = computeUpdated({
         principal: Number(t.original_value),
         monthlyRatePct: Number(t.interest_rate_month),
@@ -34,30 +35,18 @@ function ExportPage() {
         paymentDate: (t.payment_date as string) ?? null,
         paid: Number(t.paid_value),
       });
+      const base = toExportRow(t);
       return {
-        cliente: t.companies?.name ?? "",
-        tipo: t.movement_type,
-        categoria: t.category,
-        descricao: t.description,
-        valor_original: Number(t.original_value),
-        valor_pago: Number(t.paid_value),
-        juros: info.interest,
-        valor_atualizado: info.updated,
-        em_aberto: info.open,
-        taxa_juros_mes: Number(t.interest_rate_month),
-        tipo_juros: t.interest_type,
-        data_competencia: t.competence_date,
-        data_vencimento: t.due_date,
-        data_pagamento: t.payment_date,
-        parcela_num: t.installment_number,
-        parcela_total: t.installment_total,
-        forma_pagamento: t.payment_method,
-        status: t.status,
+        ...base,
+        // Campos calculados extras (não fazem parte do padrão de importação mas são úteis para relatório)
+        juros_calculado: Number(info.interest.toFixed(2)),
+        valor_atualizado: Number(info.updated.toFixed(2)),
+        em_aberto: Number(info.open.toFixed(2)),
         dias_atraso: info.days,
-        observacoes: t.notes,
       };
     });
-    const ws = XLSX.utils.json_to_sheet(rows);
+    const headers = [...EFO_HEADERS, "juros_calculado", "valor_atualizado", "em_aberto", "dias_atraso"];
+    const ws = XLSX.utils.json_to_sheet(rows, { header: headers as string[] });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "EFO");
     if (format === "csv") {
@@ -73,8 +62,12 @@ function ExportPage() {
   }
 
   function exportTemplate() {
-    const headers = ["cliente","tipo","categoria","descricao","valor_original","valor_parcela","valor_pago","taxa_juros_mes","tipo_juros","data_competencia","data_vencimento","data_pagamento","parcela_num","parcela_total","status","forma_pagamento","observacoes"];
-    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const example = [
+      "EXT-001","Empresa Alfa","12.345.678/0001-99","Conta a Receber","Serviços","CC-01",
+      "Consultoria maio","1500,00","0","0","2,5","compound","01/05/2026","10/jun/2026",
+      "","1","3","Boleto","Em aberto","Planilha antiga","Contrato #123",
+    ];
+    const ws = XLSX.utils.aoa_to_sheet([[...EFO_HEADERS], example]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Modelo");
     XLSX.writeFile(wb, "modelo_efo.xlsx");
