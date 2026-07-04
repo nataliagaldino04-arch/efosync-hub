@@ -42,13 +42,23 @@ export const Route = createFileRoute("/api/public/efo/import/financial-transacti
         }
 
         let created: unknown[] = [];
-        if (payload.length > 0) {
+        const withExt = payload.filter((p) => p.external_id);
+        const withoutExt = payload.filter((p) => !p.external_id);
+        if (withExt.length > 0) {
           const { data, error } = await admin
             .from("financial_transactions")
-            .upsert(payload as never, { onConflict: "owner_id,source_system,external_id", ignoreDuplicates: false })
+            .upsert(withExt as never, { onConflict: "owner_id,source_system,external_id", ignoreDuplicates: false })
             .select("id");
           if (error) return json({ error: error.message, errors }, { status: 500 });
-          created = data ?? [];
+          created = created.concat(data ?? []);
+        }
+        if (withoutExt.length > 0) {
+          const { data, error } = await admin
+            .from("financial_transactions")
+            .insert(withoutExt as never)
+            .select("id");
+          if (error) return json({ error: error.message, errors }, { status: 500 });
+          created = created.concat(data ?? []);
         }
 
         return json({ total: body.rows.length, imported: created.length, failed: errors.length, errors });
