@@ -14,6 +14,7 @@ import { computeUpdated } from "@/lib/finance";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
+import { RECEIVABLE_TYPES } from "@/lib/efo-schema";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatórios — EFO" }] }),
@@ -56,7 +57,7 @@ function ReportsPage() {
       paymentDate: (t.payment_date as string) ?? null,
       paid: Number(t.paid_value),
     });
-    return { ...info, due_date: t.due_date as string | null, companies: t.companies, isRevenue: ["Receita", "Conta a Receber"].includes(String(t.movement_type)) };
+    return { ...info, due_date: t.due_date as string | null, companies: t.companies, isRevenue: (RECEIVABLE_TYPES as unknown as string[]).includes(String(t.movement_type)) };
   }), [txs]);
 
   const monthly = useMemo(() => {
@@ -160,8 +161,8 @@ function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="mes" /><YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => formatBRL(v)} /><Legend />
-                <Bar dataKey="receitas" fill="hsl(var(--success))" name="Receitas" />
-                <Bar dataKey="despesas" fill="hsl(var(--destructive))" name="Despesas" />
+                <Bar dataKey="receitas" fill="var(--success)" name="Receitas" />
+                <Bar dataKey="despesas" fill="var(--destructive)" name="Despesas" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -174,7 +175,7 @@ function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="faixa" /><YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Bar dataKey="valor" fill="hsl(var(--warning))" name="Em aberto" />
+                <Bar dataKey="valor" fill="var(--warning)" name="Em aberto" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
