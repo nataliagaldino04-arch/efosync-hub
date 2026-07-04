@@ -127,8 +127,9 @@ function ParcelamentosPage() {
 
   const payInstallment = useMutation({
     mutationFn: async (v: { id: string; paid: number; full: boolean }) => {
-      const payload: Record<string, unknown> = { paid_value: v.paid };
-      if (v.full) payload.payment_date = new Date().toISOString().slice(0, 10);
+      const payload = v.full
+        ? { paid_value: v.paid, payment_date: new Date().toISOString().slice(0, 10) }
+        : { paid_value: v.paid };
       const { error } = await supabase.from("financial_transactions").update(payload).eq("id", v.id);
       if (error) throw error;
     },
