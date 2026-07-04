@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon } from "@/components/coming-soon";
+import { PageHeader } from "@/components/page-header";
+import { TxList } from "@/components/tx-list";
+
 export const Route = createFileRoute("/_authenticated/contas-pagar")({
   head: () => ({ meta: [{ title: "Contas a Pagar — EFO" }] }),
   component: () => (
-    <ComingSoon
-      title="Contas a Pagar"
-      description="Visualize e gerencie apenas as despesas e contas a pagar."
-      features={["Filtro automático por tipo Despesa e Conta a Pagar", "Ordenação por vencimento", "Marcação rápida como pago"]}
-    />
+    <>
+      <PageHeader title="Contas a Pagar" description="Despesas e contas a pagar com atualização automática de juros." />
+      <TxList types={["Despesa", "Conta a Pagar"]} kind="pagar" />
+    </>
   ),
 });

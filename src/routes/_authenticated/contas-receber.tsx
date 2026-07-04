@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon } from "@/components/coming-soon";
+import { PageHeader } from "@/components/page-header";
+import { TxList } from "@/components/tx-list";
+
 export const Route = createFileRoute("/_authenticated/contas-receber")({
   head: () => ({ meta: [{ title: "Contas a Receber — EFO" }] }),
   component: () => (
-    <ComingSoon
-      title="Contas a Receber"
-      description="Visualize e gerencie apenas os recebíveis."
-      features={["Filtro automático por tipo Receita e Conta a Receber", "Ranking de clientes com maior atraso", "Recálculo de juros em massa"]}
-    />
+    <>
+      <PageHeader title="Contas a Receber" description="Recebíveis com juros e valor atualizado automaticamente." />
+      <TxList types={["Receita", "Conta a Receber"]} kind="receber" />
+    </>
   ),
 });
