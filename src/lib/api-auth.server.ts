@@ -1,17 +1,28 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-export interface AuthedRequest { userId: string; token: string }
+export interface AuthedRequest {
+  userId: string;
+  token: string;
+}
 
 export async function authenticateBearer(request: Request): Promise<AuthedRequest> {
   const header = request.headers.get("authorization") ?? "";
   const token = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
-  if (!token) throw new Response(JSON.stringify({ error: "Missing Bearer token" }), { status: 401, headers: { "content-type": "application/json" } });
+  if (!token)
+    throw new Response(JSON.stringify({ error: "Missing Bearer token" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
   const url = process.env.SUPABASE_URL!;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
   const client = createClient<Database>(url, key, { auth: { persistSession: false } });
   const { data, error } = await client.auth.getUser(token);
-  if (error || !data.user) throw new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: { "content-type": "application/json" } });
+  if (error || !data.user)
+    throw new Response(JSON.stringify({ error: "Invalid token" }), {
+      status: 401,
+      headers: { "content-type": "application/json" },
+    });
   return { userId: data.user.id, token };
 }
 

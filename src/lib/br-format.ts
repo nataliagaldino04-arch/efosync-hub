@@ -7,12 +7,18 @@ export function formatBRL(value: number | null | undefined): string {
 
 export function formatNumber(value: number | null | undefined, digits = 2): string {
   const n = Number(value ?? 0);
-  return n.toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return n.toLocaleString("pt-BR", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
 }
 
 export function formatDateBR(value: string | Date | null | undefined): string {
   if (!value) return "";
-  const d = value instanceof Date ? value : new Date(value + (typeof value === "string" && value.length === 10 ? "T00:00:00" : ""));
+  const d =
+    value instanceof Date
+      ? value
+      : new Date(value + (typeof value === "string" && value.length === 10 ? "T00:00:00" : ""));
   if (isNaN(d.getTime())) return "";
   return d.toLocaleDateString("pt-BR");
 }
@@ -26,7 +32,9 @@ export function formatPercent(value: number | null | undefined, digits = 1): str
 export function parseBRNumber(input: string | number | null | undefined): number {
   if (input === null || input === undefined || input === "") return 0;
   if (typeof input === "number") return input;
-  let s = String(input).trim().replace(/[R$\s]/g, "");
+  let s = String(input)
+    .trim()
+    .replace(/[R$\s]/g, "");
   if (!s) return 0;
   const hasComma = s.includes(",");
   const hasDot = s.includes(".");
@@ -40,12 +48,25 @@ export function parseBRNumber(input: string | number | null | undefined): number
 }
 
 const MONTHS_PT: Record<string, number> = {
-  jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6,
-  jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12,
+  jan: 1,
+  fev: 2,
+  mar: 3,
+  abr: 4,
+  mai: 5,
+  jun: 6,
+  jul: 7,
+  ago: 8,
+  set: 9,
+  out: 10,
+  nov: 11,
+  dez: 12,
 };
 
 /** Parse dates: "12/06/2026" | "2026-06-12" | "12/jun" | Date */
-export function parseBRDate(input: string | Date | null | undefined, defaultYear?: number): string | null {
+export function parseBRDate(
+  input: string | Date | null | undefined,
+  defaultYear?: number,
+): string | null {
   if (!input) return null;
   if (input instanceof Date) {
     if (isNaN(input.getTime())) return null;
@@ -78,7 +99,11 @@ export function parseBRDate(input: string | Date | null | undefined, defaultYear
     const [, d, mn, y] = dmm;
     const m = MONTHS_PT[mn.slice(0, 3).toLowerCase()];
     if (m) {
-      const yr = y ? (y.length === 2 ? 2000 + Number(y) : Number(y)) : (defaultYear ?? new Date().getFullYear());
+      const yr = y
+        ? y.length === 2
+          ? 2000 + Number(y)
+          : Number(y)
+        : (defaultYear ?? new Date().getFullYear());
       return validIsoDate(yr, m, Number(d));
     }
   }
@@ -97,6 +122,8 @@ function validIsoDate(y: number, m: number, d: number): string | null {
 export function parseBRBoolean(input: unknown): boolean {
   if (typeof input === "boolean") return input;
   if (typeof input === "number") return input !== 0;
-  const s = String(input ?? "").trim().toLowerCase();
+  const s = String(input ?? "")
+    .trim()
+    .toLowerCase();
   return ["pago", "sim", "yes", "y", "s", "true", "1"].includes(s);
 }

@@ -19,14 +19,21 @@ function ExportPage() {
   const { data: txs = [] } = useQuery({
     queryKey: ["export-transactions"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("financial_transactions").select("*, companies(name, document)").order("due_date");
+      const { data, error } = await supabase
+        .from("financial_transactions")
+        .select("*, companies(name, document)")
+        .order("due_date");
       if (error) throw error;
       return data ?? [];
     },
   });
 
   function exportAll(format: "xlsx" | "csv") {
-    const rows = (txs as Array<Record<string, unknown> & { companies?: { name: string; document?: string } | null }>).map((t) => {
+    const rows = (
+      txs as Array<
+        Record<string, unknown> & { companies?: { name: string; document?: string } | null }
+      >
+    ).map((t) => {
       const info = computeUpdated({
         principal: Number(t.original_value),
         monthlyRatePct: Number(t.interest_rate_month),
@@ -45,7 +52,13 @@ function ExportPage() {
         dias_atraso: info.days,
       };
     });
-    const headers = [...EFO_HEADERS, "juros_calculado", "valor_atualizado", "em_aberto", "dias_atraso"];
+    const headers = [
+      ...EFO_HEADERS,
+      "juros_calculado",
+      "valor_atualizado",
+      "em_aberto",
+      "dias_atraso",
+    ];
     const ws = XLSX.utils.json_to_sheet(rows, { header: headers as string[] });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "EFO");
@@ -53,7 +66,10 @@ function ExportPage() {
       const csv = XLSX.utils.sheet_to_csv(ws, { FS: ";" });
       const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = "efo.csv"; a.click();
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "efo.csv";
+      a.click();
       URL.revokeObjectURL(url);
     } else {
       XLSX.writeFile(wb, "efo.xlsx");
@@ -63,9 +79,27 @@ function ExportPage() {
 
   function exportTemplate() {
     const example = [
-      "EXT-001","Empresa Alfa","12.345.678/0001-99","Conta a Receber","Serviços","CC-01",
-      "Consultoria maio","1500,00","0","0","2,5","compound","01/05/2026","10/jun/2026",
-      "","1","3","Boleto","Em aberto","Planilha antiga","Contrato #123",
+      "EXT-001",
+      "Empresa Alfa",
+      "12.345.678/0001-99",
+      "Conta a Receber",
+      "Serviços",
+      "CC-01",
+      "Consultoria maio",
+      "1500,00",
+      "0",
+      "0",
+      "2,5",
+      "compound",
+      "01/05/2026",
+      "10/jun/2026",
+      "",
+      "1",
+      "3",
+      "Boleto",
+      "Em aberto",
+      "Planilha antiga",
+      "Contrato #123",
     ];
     const ws = XLSX.utils.aoa_to_sheet([[...EFO_HEADERS], example]);
     const wb = XLSX.utils.book_new();
@@ -75,27 +109,49 @@ function ExportPage() {
 
   return (
     <>
-      <PageHeader title="Exportação" description="Baixe seus dados em XLSX ou CSV com todos os campos calculados." />
+      <PageHeader
+        title="Exportação"
+        description="Baixe seus dados em XLSX ou CSV com todos os campos calculados."
+      />
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <CardHeader><CardTitle>EFO completo — XLSX</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>EFO completo — XLSX</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Todos os lançamentos com juros, valor atualizado e dias de atraso.</p>
-            <Button className="w-full" onClick={() => exportAll("xlsx")}><Download className="h-4 w-4 mr-2" />Baixar XLSX ({txs.length})</Button>
+            <p className="text-sm text-muted-foreground">
+              Todos os lançamentos com juros, valor atualizado e dias de atraso.
+            </p>
+            <Button className="w-full" onClick={() => exportAll("xlsx")}>
+              <Download className="h-4 w-4 mr-2" />
+              Baixar XLSX ({txs.length})
+            </Button>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>EFO completo — CSV</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>EFO completo — CSV</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">CSV com separador ; e BOM (Excel BR).</p>
-            <Button variant="outline" className="w-full" onClick={() => exportAll("csv")}><Download className="h-4 w-4 mr-2" />Baixar CSV</Button>
+            <Button variant="outline" className="w-full" onClick={() => exportAll("csv")}>
+              <Download className="h-4 w-4 mr-2" />
+              Baixar CSV
+            </Button>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Modelo de importação</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Modelo de importação</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Planilha em branco com todas as colunas aceitas.</p>
-            <Button variant="outline" className="w-full" onClick={exportTemplate}><Download className="h-4 w-4 mr-2" />Baixar modelo</Button>
+            <p className="text-sm text-muted-foreground">
+              Planilha em branco com todas as colunas aceitas.
+            </p>
+            <Button variant="outline" className="w-full" onClick={exportTemplate}>
+              <Download className="h-4 w-4 mr-2" />
+              Baixar modelo
+            </Button>
           </CardContent>
         </Card>
       </div>

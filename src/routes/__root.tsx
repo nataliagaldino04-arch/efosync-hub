@@ -78,16 +78,36 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "EFO — Análise Econômica, Financeira e Operacional" },
-      { name: "description", content: "Sistema completo para análise econômica, financeira e operacional: lançamentos, contas a receber, juros, parcelamentos, importação de planilhas, dashboard e relatórios." },
+      {
+        name: "description",
+        content:
+          "Sistema completo para análise econômica, financeira e operacional: lançamentos, contas a receber, juros, parcelamentos, importação de planilhas, dashboard e relatórios.",
+      },
       { name: "author", content: "EFO" },
       { property: "og:title", content: "EFO — Análise Econômica, Financeira e Operacional" },
-      { property: "og:description", content: "Sistema completo para análise econômica, financeira e operacional: lançamentos, contas a receber, juros, parcelamentos, importação de planilhas, dashboard e relatórios." },
+      {
+        property: "og:description",
+        content:
+          "Sistema completo para análise econômica, financeira e operacional: lançamentos, contas a receber, juros, parcelamentos, importação de planilhas, dashboard e relatórios.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "EFO — Análise Econômica, Financeira e Operacional" },
-      { name: "twitter:description", content: "Sistema completo para análise econômica, financeira e operacional: lançamentos, contas a receber, juros, parcelamentos, importação de planilhas, dashboard e relatórios." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4f1ca64e-a7d3-4a09-80a7-95e07f328ca6/id-preview-3517d9ac--2b186662-04e7-4b2f-af87-5a0929c27674.lovable.app-1783180366597.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4f1ca64e-a7d3-4a09-80a7-95e07f328ca6/id-preview-3517d9ac--2b186662-04e7-4b2f-af87-5a0929c27674.lovable.app-1783180366597.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Sistema completo para análise econômica, financeira e operacional: lançamentos, contas a receber, juros, parcelamentos, importação de planilhas, dashboard e relatórios.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4f1ca64e-a7d3-4a09-80a7-95e07f328ca6/id-preview-3517d9ac--2b186662-04e7-4b2f-af87-5a0929c27674.lovable.app-1783180366597.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4f1ca64e-a7d3-4a09-80a7-95e07f328ca6/id-preview-3517d9ac--2b186662-04e7-4b2f-af87-5a0929c27674.lovable.app-1783180366597.png",
+      },
     ],
     links: [
       {

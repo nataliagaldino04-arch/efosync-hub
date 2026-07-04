@@ -5,10 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatBRL, parseBRNumber } from "@/lib/br-format";
 import { calcInterest, daysBetween } from "@/lib/finance";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/simulador")({
   head: () => ({ meta: [{ title: "Simulador de Juros — EFO" }] }),
@@ -36,7 +53,10 @@ function SimuladorPage() {
     if (manualDays) {
       days = Math.max(0, Math.floor(parseBRNumber(manualDays)));
     } else if (startDate && endDate) {
-      days = Math.max(0, daysBetween(new Date(endDate + "T00:00:00"), new Date(startDate + "T00:00:00")));
+      days = Math.max(
+        0,
+        daysBetween(new Date(endDate + "T00:00:00"), new Date(startDate + "T00:00:00")),
+      );
     }
     const interest = calcInterest(p, r, days, type);
     const updated = p + interest;
@@ -60,14 +80,24 @@ function SimuladorPage() {
       />
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
-          <CardHeader><CardTitle>Parâmetros</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Parâmetros</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2"><Label>Valor principal</Label><Input value={principal} onChange={(e) => setPrincipal(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Taxa de juros (% ao mês)</Label><Input value={rate} onChange={(e) => setRate(e.target.value)} /></div>
+            <div className="space-y-2">
+              <Label>Valor principal</Label>
+              <Input value={principal} onChange={(e) => setPrincipal(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Taxa de juros (% ao mês)</Label>
+              <Input value={rate} onChange={(e) => setRate(e.target.value)} />
+            </div>
             <div className="space-y-2">
               <Label>Tipo de juros</Label>
               <Select value={type} onValueChange={(v) => setType(v as "simple" | "compound")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="simple">Simples</SelectItem>
                   <SelectItem value="compound">Composto</SelectItem>
@@ -75,26 +105,62 @@ function SimuladorPage() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-2"><Label>Data inicial</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Data final</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>Data inicial</Label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Data final</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
             </div>
-            <div className="space-y-2"><Label>Ou dias de atraso (opcional)</Label><Input value={manualDays} onChange={(e) => setManualDays(e.target.value)} placeholder="ex: 45" /></div>
-            <div className="space-y-2"><Label>Valor pago (opcional)</Label><Input value={paid} onChange={(e) => setPaid(e.target.value)} /></div>
-            <Button className="w-full" onClick={() => { /* live compute */ }}>Recalcular</Button>
+            <div className="space-y-2">
+              <Label>Ou dias de atraso (opcional)</Label>
+              <Input
+                value={manualDays}
+                onChange={(e) => setManualDays(e.target.value)}
+                placeholder="ex: 45"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Valor pago (opcional)</Label>
+              <Input value={paid} onChange={(e) => setPaid(e.target.value)} />
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => {
+                /* live compute */
+              }}
+            >
+              Recalcular
+            </Button>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>Resultado</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Resultado</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <Metric label="Valor principal" value={formatBRL(result.p)} />
-              <Metric label="Taxa aplicada" value={`${result.r}% ao mês (${type === "simple" ? "simples" : "composto"})`} />
+              <Metric
+                label="Taxa aplicada"
+                value={`${result.r}% ao mês (${type === "simple" ? "simples" : "composto"})`}
+              />
               <Metric label="Dias de atraso" value={`${result.days} dias`} />
               <Metric label="Juros calculado" value={formatBRL(result.interest)} tone="warning" />
               <Metric label="Valor pago" value={formatBRL(result.paid)} tone="success" />
               <Metric label="Valor atualizado" value={formatBRL(result.updated)} tone="info" />
-              <Metric label="Saldo em aberto" value={formatBRL(result.open)} tone={result.open > 0 ? "destructive" : "success"} />
+              <Metric
+                label="Saldo em aberto"
+                value={formatBRL(result.open)}
+                tone={result.open > 0 ? "destructive" : "success"}
+              />
             </div>
 
             <div className="h-72">
@@ -105,8 +171,20 @@ function SimuladorPage() {
                   <YAxis fontSize={12} />
                   <Tooltip formatter={(v: number) => formatBRL(v)} />
                   <Legend />
-                  <Line type="monotone" dataKey="total" name="Valor atualizado" stroke="var(--primary)" strokeWidth={2} />
-                  <Line type="monotone" dataKey="juros" name="Juros" stroke="var(--warning)" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    name="Valor atualizado"
+                    stroke="var(--primary)"
+                    strokeWidth={2}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="juros"
+                    name="Juros"
+                    stroke="var(--warning)"
+                    strokeWidth={2}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -131,7 +209,15 @@ function SimuladorPage() {
   );
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone?: "success" | "destructive" | "warning" | "info" }) {
+function Metric({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "success" | "destructive" | "warning" | "info";
+}) {
   const toneMap: Record<string, string> = {
     success: "text-success",
     destructive: "text-destructive",

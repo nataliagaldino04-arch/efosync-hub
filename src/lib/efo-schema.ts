@@ -29,7 +29,7 @@ export type EfoHeader = (typeof EFO_HEADERS)[number];
 // Aliases (old names / common variations) → canonical
 export const HEADER_ALIASES: Record<string, EfoHeader> = {
   // canonical maps to itself
-  ...Object.fromEntries(EFO_HEADERS.map((h) => [h, h])) as Record<string, EfoHeader>,
+  ...(Object.fromEntries(EFO_HEADERS.map((h) => [h, h])) as Record<string, EfoHeader>),
   // legacy / variants
   cliente: "cliente_nome",
   nome_cliente: "cliente_nome",
@@ -108,11 +108,27 @@ export const MOVEMENT_TYPES = [
 ] as const;
 export type MovementType = (typeof MOVEMENT_TYPES)[number];
 
-export const RECEIVABLE_TYPES: MovementType[] = ["Receita", "Conta a Receber", "Parcelamento", "Juros"];
+export const RECEIVABLE_TYPES: MovementType[] = [
+  "Receita",
+  "Conta a Receber",
+  "Parcelamento",
+  "Juros",
+];
 export const PAYABLE_TYPES: MovementType[] = ["Despesa", "Conta a Pagar"];
-export const REQUIRE_DUE_DATE: MovementType[] = ["Conta a Receber", "Conta a Pagar", "Parcelamento"];
+export const REQUIRE_DUE_DATE: MovementType[] = [
+  "Conta a Receber",
+  "Conta a Pagar",
+  "Parcelamento",
+];
 
-export const STATUSES = ["Pago", "Parcial", "Vencido", "A vencer", "Em aberto", "Cancelado"] as const;
+export const STATUSES = [
+  "Pago",
+  "Parcial",
+  "Vencido",
+  "A vencer",
+  "Em aberto",
+  "Cancelado",
+] as const;
 const STATUS_SET = new Set<string>(STATUSES as unknown as string[]);
 
 export interface EfoRow {
@@ -139,20 +155,30 @@ export interface EfoRow {
   observacoes: string | null;
 }
 
-export interface NormalizeOptions { defaultYear?: number; defaultSource?: string }
+export interface NormalizeOptions {
+  defaultYear?: number;
+  defaultSource?: string;
+}
 
 /** Normalize a single mapped row (canonical keys already). Returns row + errors. */
-export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeOptions = {}): { row: EfoRow; errors: string[] } {
+export function normalizeEfoRow(
+  input: Record<string, unknown>,
+  opts: NormalizeOptions = {},
+): { row: EfoRow; errors: string[] } {
   const errors: string[] = [];
   const get = (k: EfoHeader) => input[k];
-  const str = (v: unknown) => { const s = String(v ?? "").trim(); return s ? s : null; };
+  const str = (v: unknown) => {
+    const s = String(v ?? "").trim();
+    return s ? s : null;
+  };
 
   const cliente_nome = str(get("cliente_nome"));
   const tipoRaw = str(get("tipo_movimento"));
   const tipo_movimento = (tipoRaw as MovementType) ?? "Receita";
   if (!cliente_nome) errors.push("cliente_nome obrigatório");
   if (!tipoRaw) errors.push("tipo_movimento obrigatório");
-  else if (!MOVEMENT_TYPES.includes(tipo_movimento)) errors.push(`tipo_movimento inválido: ${tipoRaw}`);
+  else if (!MOVEMENT_TYPES.includes(tipo_movimento))
+    errors.push(`tipo_movimento inválido: ${tipoRaw}`);
 
   const valor_original = parseBRNumber(get("valor_original") as string | number);
   if (!(valor_original > 0)) errors.push("valor_original deve ser > 0");
@@ -160,7 +186,8 @@ export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeO
   const rawVenc = get("data_vencimento");
   const data_vencimento = parseBRDate(rawVenc as string, opts.defaultYear);
   if (rawVenc && !data_vencimento) errors.push(`data_vencimento inválida: ${String(rawVenc)}`);
-  if (!data_vencimento && REQUIRE_DUE_DATE.includes(tipo_movimento)) errors.push("data_vencimento obrigatória para " + tipo_movimento);
+  if (!data_vencimento && REQUIRE_DUE_DATE.includes(tipo_movimento))
+    errors.push("data_vencimento obrigatória para " + tipo_movimento);
 
   const rawComp = get("data_competencia");
   const data_competencia = parseBRDate(rawComp as string, opts.defaultYear);
@@ -175,9 +202,12 @@ export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeO
   if (valor_pago < 0) errors.push("valor_pago negativo");
   const valor_parcela_pmt = parseBRNumber(get("valor_parcela_pmt") as string | number);
   if (valor_parcela_pmt < 0) errors.push("valor_parcela_pmt negativo");
-  if (valor_pago > valor_original * 5) errors.push("valor_pago maior que valor atualizado esperado");
+  if (valor_pago > valor_original * 5)
+    errors.push("valor_pago maior que valor atualizado esperado");
 
-  const juRaw = String(get("tipo_juros") ?? "simple").toLowerCase().trim();
+  const juRaw = String(get("tipo_juros") ?? "simple")
+    .toLowerCase()
+    .trim();
   let tipo_juros: "simple" | "compound" = "simple";
   if (juRaw === "" || juRaw === "simple" || juRaw === "simples") tipo_juros = "simple";
   else if (juRaw === "compound" || juRaw === "composto") tipo_juros = "compound";
@@ -187,9 +217,12 @@ export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeO
   const ptRaw = get("parcela_total");
   const parcela_numero = pnRaw === "" || pnRaw == null ? null : Number(pnRaw);
   const parcela_total = ptRaw === "" || ptRaw == null ? null : Number(ptRaw);
-  if (parcela_numero !== null && (!Number.isFinite(parcela_numero) || parcela_numero < 1)) errors.push("parcela_numero inválido");
-  if (parcela_total !== null && (!Number.isFinite(parcela_total) || parcela_total < 1)) errors.push("parcela_total inválido");
-  if (parcela_numero && parcela_total && parcela_numero > parcela_total) errors.push("parcela_numero > parcela_total");
+  if (parcela_numero !== null && (!Number.isFinite(parcela_numero) || parcela_numero < 1))
+    errors.push("parcela_numero inválido");
+  if (parcela_total !== null && (!Number.isFinite(parcela_total) || parcela_total < 1))
+    errors.push("parcela_total inválido");
+  if (parcela_numero && parcela_total && parcela_numero > parcela_total)
+    errors.push("parcela_numero > parcela_total");
 
   const rawStatus = str(get("status"));
   let status = rawStatus ?? "Em aberto";
@@ -207,7 +240,8 @@ export function normalizeEfoRow(input: Record<string, unknown>, opts: NormalizeO
   }
   // Coerência: se marcou pago mas não informou valor_pago, usa valor_original
   const finalPaid = status === "Pago" && valor_pago === 0 ? valor_original : valor_pago;
-  if (status === "Pago" && finalPaid < valor_original) errors.push("status Pago mas valor_pago menor que valor_original");
+  if (status === "Pago" && finalPaid < valor_original)
+    errors.push("status Pago mas valor_pago menor que valor_original");
 
   const row: EfoRow = {
     id_externo: str(get("id_externo")),
@@ -263,7 +297,9 @@ export function toDbTransaction(row: EfoRow, ownerId: string, companyId: string 
 }
 
 /** Convert DB row → canonical export row (for XLSX/CSV). */
-export function toExportRow(t: Record<string, unknown> & { companies?: { name?: string; document?: string } | null }): Record<EfoHeader, unknown> {
+export function toExportRow(
+  t: Record<string, unknown> & { companies?: { name?: string; document?: string } | null },
+): Record<EfoHeader, unknown> {
   return {
     id_externo: t.external_id ?? "",
     cliente_nome: t.companies?.name ?? "",
