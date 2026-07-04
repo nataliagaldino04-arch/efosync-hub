@@ -84,9 +84,9 @@ function ImportPage() {
     if (!f) return;
     setFileName(f.name);
     const buf = await f.arrayBuffer();
-    const wb = XLSX.read(buf, { type: "array" });
+    const wb = XLSX.read(buf, { type: "array", cellDates: true });
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+    const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: false, dateNF: "yyyy-mm-dd" });
     if (raw.length === 0) { toast.error("Arquivo vazio"); return; }
     const headers = Object.keys(raw[0]);
     setFileHeaders(headers);
@@ -152,11 +152,19 @@ function ImportPage() {
             : null;
           payload.push(toDbTransaction(r.data, user.id, companyId));
         }
-        // upsert por owner_id/source_system/external_id
-        const { error } = await supabase
-          .from("financial_transactions")
-          .upsert(payload as never, { onConflict: "owner_id,source_system,external_id", ignoreDuplicates: false });
-        if (error) throw error;
+        // Somente registros com external_id usam upsert (índice único parcial existe apenas quando external_id IS NOT NULL).
+        const withExt = payload.filter((p) => p.external_id);
+        const withoutExt = payload.filter((p) => !p.external_id);
+        if (withExt.length > 0) {
+          const { error } = await supabase
+            .from("financial_transactions")
+            .upsert(withExt as never, { onConflict: "owner_id,source_system,external_id", ignoreDuplicates: false });
+          if (error) throw error;
+        }
+        if (withoutExt.length > 0) {
+          const { error } = await supabase.from("financial_transactions").insert(withoutExt as never);
+          if (error) throw error;
+        }
       }
     },
     onSuccess: () => {
