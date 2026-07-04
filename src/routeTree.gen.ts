@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSimuladorRouteImport } from './routes/_authenticated/simulador'
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
+import { Route as AuthenticatedParcelamentosRouteImport } from './routes/_authenticated/parcelamentos'
 import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedContasReceberRouteImport } from './routes/_authenticated/contas-receber'
@@ -46,6 +47,12 @@ const AuthenticatedPlanoAcaoRoute = AuthenticatedPlanoAcaoRouteImport.update({
   path: '/plano-acao',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedParcelamentosRoute =
+  AuthenticatedParcelamentosRouteImport.update({
+    id: '/parcelamentos',
+    path: '/parcelamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedLancamentosRoute =
   AuthenticatedLancamentosRouteImport.update({
     id: '/lancamentos',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/contas-receber': typeof AuthenticatedContasReceberRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/parcelamentos': typeof AuthenticatedParcelamentosRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
 }
@@ -109,6 +117,7 @@ export interface FileRoutesByTo {
   '/contas-receber': typeof AuthenticatedContasReceberRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/parcelamentos': typeof AuthenticatedParcelamentosRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
 }
@@ -124,6 +133,7 @@ export interface FileRoutesById {
   '/_authenticated/contas-receber': typeof AuthenticatedContasReceberRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/_authenticated/parcelamentos': typeof AuthenticatedParcelamentosRoute
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
   '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
 }
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/contas-receber'
     | '/dashboard'
     | '/lancamentos'
+    | '/parcelamentos'
     | '/plano-acao'
     | '/simulador'
   fileRoutesByTo: FileRoutesByTo
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/contas-receber'
     | '/dashboard'
     | '/lancamentos'
+    | '/parcelamentos'
     | '/plano-acao'
     | '/simulador'
   id:
@@ -166,6 +178,7 @@ export interface FileRouteTypes {
     | '/_authenticated/contas-receber'
     | '/_authenticated/dashboard'
     | '/_authenticated/lancamentos'
+    | '/_authenticated/parcelamentos'
     | '/_authenticated/plano-acao'
     | '/_authenticated/simulador'
   fileRoutesById: FileRoutesById
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       path: '/plano-acao'
       fullPath: '/plano-acao'
       preLoaderRoute: typeof AuthenticatedPlanoAcaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/parcelamentos': {
+      id: '/_authenticated/parcelamentos'
+      path: '/parcelamentos'
+      fullPath: '/parcelamentos'
+      preLoaderRoute: typeof AuthenticatedParcelamentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/lancamentos': {
@@ -273,6 +293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContasReceberRoute: typeof AuthenticatedContasReceberRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLancamentosRoute: typeof AuthenticatedLancamentosRoute
+  AuthenticatedParcelamentosRoute: typeof AuthenticatedParcelamentosRoute
   AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
   AuthenticatedSimuladorRoute: typeof AuthenticatedSimuladorRoute
 }
@@ -285,6 +306,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContasReceberRoute: AuthenticatedContasReceberRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLancamentosRoute: AuthenticatedLancamentosRoute,
+  AuthenticatedParcelamentosRoute: AuthenticatedParcelamentosRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
   AuthenticatedSimuladorRoute: AuthenticatedSimuladorRoute,
 }
