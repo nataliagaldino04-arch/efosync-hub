@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSimuladorRouteImport } from './routes/_authenticated/simulador'
 import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSimuladorRoute = AuthenticatedSimuladorRouteImport.update({
+  id: '/simulador',
+  path: '/simulador',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLancamentosRoute =
   AuthenticatedLancamentosRouteImport.update({
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof AuthenticatedClientesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/simulador': typeof AuthenticatedSimuladorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/clientes': typeof AuthenticatedClientesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/simulador': typeof AuthenticatedSimuladorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -69,12 +77,19 @@ export interface FileRoutesById {
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/lancamentos': typeof AuthenticatedLancamentosRoute
+  '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/clientes' | '/dashboard' | '/lancamentos'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/clientes'
+    | '/dashboard'
+    | '/lancamentos'
+    | '/simulador'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/clientes' | '/dashboard' | '/lancamentos'
+  to: '/' | '/auth' | '/clientes' | '/dashboard' | '/lancamentos' | '/simulador'
   id:
     | '__root__'
     | '/'
@@ -83,6 +98,7 @@ export interface FileRouteTypes {
     | '/_authenticated/clientes'
     | '/_authenticated/dashboard'
     | '/_authenticated/lancamentos'
+    | '/_authenticated/simulador'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -114,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/simulador': {
+      id: '/_authenticated/simulador'
+      path: '/simulador'
+      fullPath: '/simulador'
+      preLoaderRoute: typeof AuthenticatedSimuladorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lancamentos': {
       id: '/_authenticated/lancamentos'
       path: '/lancamentos'
@@ -142,12 +165,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedLancamentosRoute: typeof AuthenticatedLancamentosRoute
+  AuthenticatedSimuladorRoute: typeof AuthenticatedSimuladorRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedLancamentosRoute: AuthenticatedLancamentosRoute,
+  AuthenticatedSimuladorRoute: AuthenticatedSimuladorRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
