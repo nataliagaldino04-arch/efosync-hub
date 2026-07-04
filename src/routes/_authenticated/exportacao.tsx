@@ -19,7 +19,7 @@ function ExportPage() {
   const { data: txs = [] } = useQuery({
     queryKey: ["export-transactions"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("financial_transactions").select("*, companies(name)").order("due_date");
+      const { data, error } = await supabase.from("financial_transactions").select("*, companies(name, document)").order("due_date");
       if (error) throw error;
       return data ?? [];
     },
