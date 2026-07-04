@@ -26,6 +26,7 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedAnaliseEfoRouteImport } from './routes/_authenticated/analise-efo'
 import { Route as ApiPublicEfoReportsReceivablesRouteImport } from './routes/api/public/efo/reports/receivables'
+import { Route as ApiPublicEfoReportsInterestRouteImport } from './routes/api/public/efo/reports/interest'
 import { Route as ApiPublicEfoImportFinancialTransactionsRouteImport } from './routes/api/public/efo/import/financial-transactions'
 import { Route as ApiPublicEfoExportTemplateRouteImport } from './routes/api/public/efo/export/template'
 
@@ -119,6 +120,12 @@ const ApiPublicEfoReportsReceivablesRoute =
     path: '/api/public/efo/reports/receivables',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicEfoReportsInterestRoute =
+  ApiPublicEfoReportsInterestRouteImport.update({
+    id: '/api/public/efo/reports/interest',
+    path: '/api/public/efo/reports/interest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicEfoImportFinancialTransactionsRoute =
   ApiPublicEfoImportFinancialTransactionsRouteImport.update({
     id: '/api/public/efo/import/financial-transactions',
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/simulador': typeof AuthenticatedSimuladorRoute
   '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
   '/api/public/efo/import/financial-transactions': typeof ApiPublicEfoImportFinancialTransactionsRoute
+  '/api/public/efo/reports/interest': typeof ApiPublicEfoReportsInterestRoute
   '/api/public/efo/reports/receivables': typeof ApiPublicEfoReportsReceivablesRoute
 }
 export interface FileRoutesByTo {
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/simulador': typeof AuthenticatedSimuladorRoute
   '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
   '/api/public/efo/import/financial-transactions': typeof ApiPublicEfoImportFinancialTransactionsRoute
+  '/api/public/efo/reports/interest': typeof ApiPublicEfoReportsInterestRoute
   '/api/public/efo/reports/receivables': typeof ApiPublicEfoReportsReceivablesRoute
 }
 export interface FileRoutesById {
@@ -192,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
   '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
   '/api/public/efo/import/financial-transactions': typeof ApiPublicEfoImportFinancialTransactionsRoute
+  '/api/public/efo/reports/interest': typeof ApiPublicEfoReportsInterestRoute
   '/api/public/efo/reports/receivables': typeof ApiPublicEfoReportsReceivablesRoute
 }
 export interface FileRouteTypes {
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/simulador'
     | '/api/public/efo/export/template'
     | '/api/public/efo/import/financial-transactions'
+    | '/api/public/efo/reports/interest'
     | '/api/public/efo/reports/receivables'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/simulador'
     | '/api/public/efo/export/template'
     | '/api/public/efo/import/financial-transactions'
+    | '/api/public/efo/reports/interest'
     | '/api/public/efo/reports/receivables'
   id:
     | '__root__'
@@ -255,6 +267,7 @@ export interface FileRouteTypes {
     | '/_authenticated/simulador'
     | '/api/public/efo/export/template'
     | '/api/public/efo/import/financial-transactions'
+    | '/api/public/efo/reports/interest'
     | '/api/public/efo/reports/receivables'
   fileRoutesById: FileRoutesById
 }
@@ -264,6 +277,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ApiPublicEfoExportTemplateRoute: typeof ApiPublicEfoExportTemplateRoute
   ApiPublicEfoImportFinancialTransactionsRoute: typeof ApiPublicEfoImportFinancialTransactionsRoute
+  ApiPublicEfoReportsInterestRoute: typeof ApiPublicEfoReportsInterestRoute
   ApiPublicEfoReportsReceivablesRoute: typeof ApiPublicEfoReportsReceivablesRoute
 }
 
@@ -388,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicEfoReportsReceivablesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/efo/reports/interest': {
+      id: '/api/public/efo/reports/interest'
+      path: '/api/public/efo/reports/interest'
+      fullPath: '/api/public/efo/reports/interest'
+      preLoaderRoute: typeof ApiPublicEfoReportsInterestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/efo/import/financial-transactions': {
       id: '/api/public/efo/import/financial-transactions'
       path: '/api/public/efo/import/financial-transactions'
@@ -447,6 +468,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicEfoExportTemplateRoute: ApiPublicEfoExportTemplateRoute,
   ApiPublicEfoImportFinancialTransactionsRoute:
     ApiPublicEfoImportFinancialTransactionsRoute,
+  ApiPublicEfoReportsInterestRoute: ApiPublicEfoReportsInterestRoute,
   ApiPublicEfoReportsReceivablesRoute: ApiPublicEfoReportsReceivablesRoute,
 }
 export const routeTree = rootRouteImport
