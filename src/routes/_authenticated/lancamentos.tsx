@@ -155,7 +155,7 @@ function LancamentosPage() {
               dueDate: input.due_date ?? null,
               paymentDate: input.payment_date ?? null,
             });
-      const payload = { ...input, status } as Record<string, unknown>;
+      const payload = { ...input, status } as Partial<Tx> & { id?: string };
       if (input.id) {
         const { id, ...rest } = payload;
         const { error } = await supabase.from("financial_transactions").update(rest).eq("id", id);
