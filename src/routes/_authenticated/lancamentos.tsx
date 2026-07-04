@@ -92,7 +92,10 @@ function LancamentosPage() {
   });
 
   const upsert = useMutation({
-    mutationFn: async (input: Partial<Tx> & { id?: string }) => {
+    mutationFn: async (rawInput: Partial<Tx> & { id?: string }) => {
+      // Strip joined columns / nulls that Supabase doesn't accept on update.
+      const { companies: _c, ...input } = rawInput as Partial<Tx> & { id?: string; companies?: unknown };
+      void _c;
       // Recompute status automatically
       const updated = computeUpdated({
         principal: Number(input.original_value ?? 0),
@@ -108,12 +111,13 @@ function LancamentosPage() {
         dueDate: input.due_date ?? null,
         paymentDate: input.payment_date ?? null,
       });
-      const payload = { ...input, status };
+      const payload = { ...input, status } as any;
       if (input.id) {
-        const { error } = await supabase.from("financial_transactions").update(payload).eq("id", input.id);
+        const { id, ...rest } = payload;
+        const { error } = await supabase.from("financial_transactions").update(rest).eq("id", id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("financial_transactions").insert(payload as any);
+        const { error } = await supabase.from("financial_transactions").insert(payload);
         if (error) throw error;
       }
     },
