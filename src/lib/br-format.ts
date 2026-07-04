@@ -47,9 +47,22 @@ const MONTHS_PT: Record<string, number> = {
 /** Parse dates: "12/06/2026" | "2026-06-12" | "12/jun" | Date */
 export function parseBRDate(input: string | Date | null | undefined, defaultYear?: number): string | null {
   if (!input) return null;
-  if (input instanceof Date) return input.toISOString().slice(0, 10);
+  if (input instanceof Date) {
+    if (isNaN(input.getTime())) return null;
+    const y = input.getFullYear();
+    const m = String(input.getMonth() + 1).padStart(2, "0");
+    const d = String(input.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
   const s = String(input).trim();
   if (!s) return null;
+  // Serial number do Excel (raro; xlsx costuma converter). 1900-01-01 = 1
+  if (/^\d+(?:\.\d+)?$/.test(s) && Number(s) > 59 && Number(s) < 60000) {
+    const serial = Number(s);
+    const ms = Math.round((serial - 25569) * 86400 * 1000);
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
   // ISO
   if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
   // dd/mm/yyyy or dd/mm/yy
@@ -57,7 +70,7 @@ export function parseBRDate(input: string | Date | null | undefined, defaultYear
   if (dmy) {
     const [, d, m, y] = dmy;
     const yr = y.length === 2 ? 2000 + Number(y) : Number(y);
-    return `${yr}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+    return validIsoDate(yr, Number(m), Number(d));
   }
   // dd/mmm ex: 12/jun
   const dmm = s.match(/^(\d{1,2})\/([a-zA-Zç]+)(?:\/(\d{2,4}))?$/);
@@ -66,10 +79,18 @@ export function parseBRDate(input: string | Date | null | undefined, defaultYear
     const m = MONTHS_PT[mn.slice(0, 3).toLowerCase()];
     if (m) {
       const yr = y ? (y.length === 2 ? 2000 + Number(y) : Number(y)) : (defaultYear ?? new Date().getFullYear());
-      return `${yr}-${String(m).padStart(2, "0")}-${d.padStart(2, "0")}`;
+      return validIsoDate(yr, m, Number(d));
     }
   }
   return null;
+}
+
+function validIsoDate(y: number, m: number, d: number): string | null {
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return null;
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 /** Boolean-ish strings: pago, sim, yes, 1 => true */
