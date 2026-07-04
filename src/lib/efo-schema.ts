@@ -83,7 +83,7 @@ function normKey(k: string): string {
     .trim()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[\s.\-\/]+/g, "_");
+    .replace(/[\s.\-/]+/g, "_");
 }
 
 /** Suggest canonical mapping from raw file headers. Unknown → "". */
