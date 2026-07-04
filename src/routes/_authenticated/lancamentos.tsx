@@ -158,10 +158,15 @@ function LancamentosPage() {
       const payload = { ...input, status } as Partial<Tx> & { id?: string };
       if (input.id) {
         const { id, ...rest } = payload;
-        const { error } = await supabase.from("financial_transactions").update(rest).eq("id", id);
+        const { error } = await supabase
+          .from("financial_transactions")
+          .update(rest as never)
+          .eq("id", id as string);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("financial_transactions").insert(payload);
+        const { error } = await supabase
+          .from("financial_transactions")
+          .insert(payload as never);
         if (error) throw error;
       }
     },
