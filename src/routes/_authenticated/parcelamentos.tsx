@@ -562,13 +562,22 @@ function ParcelamentosPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
+                            onClick={() => {
+                              const info = computeUpdated({
+                                principal: Number(r.original_value),
+                                monthlyRatePct: Number(r.interest_rate_month ?? 0),
+                                type:
+                                  (r.interest_type as "simple" | "compound") || "simple",
+                                dueDate: r.due_date,
+                                paymentDate: null,
+                                paid: 0,
+                              });
                               payInstallment.mutate({
                                 id: r.id,
-                                paid: Number(r.original_value),
+                                paid: Number(info.updated.toFixed(2)),
                                 full: true,
-                              })
-                            }
+                              });
+                            }}
                           >
                             Pagar
                           </Button>
