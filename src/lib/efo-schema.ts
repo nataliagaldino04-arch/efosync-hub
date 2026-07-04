@@ -1,5 +1,6 @@
 // EFO canonical import/export schema, alias map, validators.
 import { parseBRBoolean, parseBRDate, parseBRNumber } from "./br-format";
+import { computeUpdated } from "./finance";
 
 export const EFO_HEADERS = [
   "id_externo",
@@ -202,8 +203,27 @@ export function normalizeEfoRow(
   if (valor_pago < 0) errors.push("valor_pago negativo");
   const valor_parcela_pmt = parseBRNumber(get("valor_parcela_pmt") as string | number);
   if (valor_parcela_pmt < 0) errors.push("valor_parcela_pmt negativo");
-  if (valor_pago > valor_original * 5)
-    errors.push("valor_pago maior que valor atualizado esperado");
+  // Valor atualizado = principal + juros calculados até hoje/pagamento
+  const juRawEarly = String(get("tipo_juros") ?? "simple")
+    .toLowerCase()
+    .trim();
+  const jurosTipo: "simple" | "compound" =
+    juRawEarly === "compound" || juRawEarly === "composto" ? "compound" : "simple";
+  const _venc = parseBRDate(rawVenc as string, opts.defaultYear);
+  const _pag = parseBRDate(rawPag as string, opts.defaultYear);
+  const _updated = computeUpdated({
+    principal: valor_original,
+    monthlyRatePct: taxa_juros_mes,
+    type: jurosTipo,
+    dueDate: _venc,
+    paymentDate: _pag,
+    paid: 0,
+  });
+  // Tolerância de 1% para arredondamento
+  if (valor_pago > _updated.updated * 1.01 && valor_original > 0)
+    errors.push(
+      `valor_pago (${valor_pago.toFixed(2)}) maior que valor atualizado (${_updated.updated.toFixed(2)})`,
+    );
 
   const juRaw = String(get("tipo_juros") ?? "simple")
     .toLowerCase()
