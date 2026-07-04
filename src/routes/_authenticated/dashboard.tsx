@@ -1,10 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatBRL, formatPercent } from "@/lib/br-format";
 import { computeUpdated } from "@/lib/finance";
+import { PAYABLE_TYPES, RECEIVABLE_TYPES } from "@/lib/efo-schema";
 import {
   Bar,
   BarChart,
@@ -38,8 +43,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 interface Tx {
   id: string;
+  company_id: string | null;
   movement_type: string;
   category: string | null;
+  cost_center: string | null;
+  source_system: string | null;
   original_value: number;
   paid_value: number;
   interest_rate_month: number;
@@ -51,13 +59,27 @@ interface Tx {
 }
 
 function DashboardPage() {
-  const { data: txs = [], isLoading } = useQuery({
+  const [companyId, setCompanyId] = useState("__all__");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [status, setStatus] = useState("__all__");
+  const [category, setCategory] = useState("");
+  const [costCenter, setCostCenter] = useState("");
+  const [source, setSource] = useState("");
+  const [movType, setMovType] = useState("__all__");
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["dashboard-companies"],
+    queryFn: async () => (await supabase.from("companies").select("id,name").order("name")).data ?? [],
+  });
+
+  const { data: rawTxs = [], isLoading } = useQuery({
     queryKey: ["dashboard-transactions"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financial_transactions")
         .select(
-          "id,movement_type,category,original_value,paid_value,interest_rate_month,interest_type,due_date,payment_date,status,competence_date",
+          "id,company_id,movement_type,category,cost_center,source_system,original_value,paid_value,interest_rate_month,interest_type,due_date,payment_date,status,competence_date",
         )
         .order("due_date", { ascending: false });
       if (error) throw error;
@@ -65,13 +87,26 @@ function DashboardPage() {
     },
   });
 
+  const txs = useMemo(() => rawTxs.filter((t) => {
+    if (companyId !== "__all__" && t.company_id !== companyId) return false;
+    if (status !== "__all__" && t.status !== status) return false;
+    if (movType !== "__all__" && t.movement_type !== movType) return false;
+    if (category && !(t.category ?? "").toLowerCase().includes(category.toLowerCase())) return false;
+    if (costCenter && !(t.cost_center ?? "").toLowerCase().includes(costCenter.toLowerCase())) return false;
+    if (source && !(t.source_system ?? "").toLowerCase().includes(source.toLowerCase())) return false;
+    const ref = t.competence_date || t.due_date;
+    if (from && (!ref || ref < from)) return false;
+    if (to && (!ref || ref > to)) return false;
+    return true;
+  }), [rawTxs, companyId, status, movType, category, costCenter, source, from, to]);
+
   const stats = computeStats(txs);
   const monthly = groupMonthly(txs);
-  const categoriesRev = groupCategories(txs, ["Receita", "Conta a Receber"]);
-  const categoriesExp = groupCategories(txs, ["Despesa", "Conta a Pagar"]);
+  const categoriesExp = groupCategories(txs, PAYABLE_TYPES as unknown as string[]);
+  // Categorias exclusivas: pago | vencido | a vencer (não conta vencido duas vezes)
   const paidVsOpen = [
     { name: "Pago", value: stats.paid },
-    { name: "Em aberto", value: stats.open },
+    { name: "A vencer", value: stats.upcoming },
     { name: "Vencido", value: stats.overdue },
   ];
 
@@ -81,6 +116,44 @@ function DashboardPage() {
         title="Dashboard financeiro"
         description="Visão geral em tempo real de receitas, despesas, juros e inadimplência."
       />
+
+      <Card className="mb-4">
+        <CardHeader><CardTitle className="text-base">Filtros</CardTitle></CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-1"><Label className="text-xs">Cliente</Label>
+            <Select value={companyId} onValueChange={setCompanyId}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos</SelectItem>
+                {(companies as { id: string; name: string }[]).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1"><Label className="text-xs">De</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+          <div className="space-y-1"><Label className="text-xs">Até</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+          <div className="space-y-1"><Label className="text-xs">Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos</SelectItem>
+                {["Pago","Parcial","Vencido","A vencer","Em aberto","Cancelado"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1"><Label className="text-xs">Tipo</Label>
+            <Select value={movType} onValueChange={setMovType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos</SelectItem>
+                {["Receita","Despesa","Conta a Receber","Conta a Pagar","Parcelamento","Juros","Ajuste"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1"><Label className="text-xs">Categoria</Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Filtrar" /></div>
+          <div className="space-y-1"><Label className="text-xs">Centro de custo</Label><Input value={costCenter} onChange={(e) => setCostCenter(e.target.value)} placeholder="Filtrar" /></div>
+          <div className="space-y-1"><Label className="text-xs">Origem</Label><Input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Filtrar" /></div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={<ArrowDownRight className="h-4 w-4" />} label="Total a receber" value={formatBRL(stats.receivable)} tone="info" />
@@ -230,8 +303,8 @@ function computeStats(txs: Tx[]) {
       paid: Number(t.paid_value),
     });
     interest += info.interest;
-    const isReceivable = t.movement_type === "Receita" || t.movement_type === "Conta a Receber" || t.movement_type === "Parcelamento";
-    const isExpense = t.movement_type === "Despesa" || t.movement_type === "Conta a Pagar";
+    const isReceivable = (RECEIVABLE_TYPES as unknown as string[]).includes(t.movement_type);
+    const isExpense = (PAYABLE_TYPES as unknown as string[]).includes(t.movement_type);
     if (isReceivable) {
       revenues += info.principal;
       receivable += info.open + Number(t.paid_value);
@@ -256,9 +329,9 @@ function groupMonthly(txs: Tx[]) {
     if (!d) continue;
     const key = d.slice(0, 7);
     const cur = map.get(key) ?? { month: key, receitas: 0, despesas: 0, saldo: 0 };
-    if (t.movement_type === "Receita" || t.movement_type === "Conta a Receber" || t.movement_type === "Parcelamento") {
+    if ((RECEIVABLE_TYPES as unknown as string[]).includes(t.movement_type)) {
       cur.receitas += Number(t.original_value);
-    } else if (t.movement_type === "Despesa" || t.movement_type === "Conta a Pagar") {
+    } else if ((PAYABLE_TYPES as unknown as string[]).includes(t.movement_type)) {
       cur.despesas += Number(t.original_value);
     }
     cur.saldo = cur.receitas - cur.despesas;
