@@ -256,12 +256,10 @@ function ImportPage() {
         const withExt = payload.filter((p) => p.external_id);
         const withoutExt = payload.filter((p) => !p.external_id);
         if (withExt.length > 0) {
-          const { error } = await supabase
-            .from("financial_transactions")
-            .upsert(withExt as never, {
-              onConflict: "owner_id,source_system,external_id",
-              ignoreDuplicates: false,
-            });
+          const { error } = await supabase.from("financial_transactions").upsert(withExt as never, {
+            onConflict: "owner_id,source_system,external_id",
+            ignoreDuplicates: false,
+          });
           if (error) throw error;
         }
         if (withoutExt.length > 0) {
