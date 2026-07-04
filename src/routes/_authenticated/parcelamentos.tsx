@@ -635,5 +635,6 @@ interface InstallmentRow {
   interest_rate_month: number | null;
   interest_type: string | null;
   payment_date: string | null;
+  installment_group_id: string | null;
   companies: { name: string } | null;
 }
