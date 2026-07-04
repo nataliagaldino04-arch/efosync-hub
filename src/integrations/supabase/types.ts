@@ -226,10 +226,12 @@ export type Database = {
           competence_date: string | null
           cost_center: string | null
           created_at: string
+          dedupe_key: string | null
           description: string | null
           due_date: string | null
           external_id: string | null
           id: string
+          installment_group_id: string | null
           installment_number: number | null
           installment_total: number | null
           installment_value: number
@@ -252,10 +254,12 @@ export type Database = {
           competence_date?: string | null
           cost_center?: string | null
           created_at?: string
+          dedupe_key?: string | null
           description?: string | null
           due_date?: string | null
           external_id?: string | null
           id?: string
+          installment_group_id?: string | null
           installment_number?: number | null
           installment_total?: number | null
           installment_value?: number
@@ -278,10 +282,12 @@ export type Database = {
           competence_date?: string | null
           cost_center?: string | null
           created_at?: string
+          dedupe_key?: string | null
           description?: string | null
           due_date?: string | null
           external_id?: string | null
           id?: string
+          installment_group_id?: string | null
           installment_number?: number | null
           installment_total?: number | null
           installment_value?: number
