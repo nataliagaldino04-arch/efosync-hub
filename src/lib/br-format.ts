@@ -84,8 +84,9 @@ export function parseBRDate(
     const d = new Date(ms);
     if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
   }
-  // ISO
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  // ISO — valida ano/mês/dia (rejeita 2026-02-31 etc.)
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return validIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
   // dd/mm/yyyy or dd/mm/yy
   const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if (dmy) {
