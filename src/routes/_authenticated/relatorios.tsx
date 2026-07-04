@@ -52,7 +52,7 @@ function ReportsPage() {
       paymentDate: (t.payment_date as string) ?? null,
       paid: Number(t.paid_value),
     });
-    return { ...t, ...info, isRevenue: ["Receita", "Conta a Receber"].includes(String(t.movement_type)) };
+    return { ...info, due_date: t.due_date as string | null, companies: t.companies, isRevenue: ["Receita", "Conta a Receber"].includes(String(t.movement_type)) };
   }), [txs]);
 
   const monthly = useMemo(() => {
