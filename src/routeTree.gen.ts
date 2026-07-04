@@ -25,6 +25,7 @@ import { Route as AuthenticatedContasPagarRouteImport } from './routes/_authenti
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedAnaliseEfoRouteImport } from './routes/_authenticated/analise-efo'
+import { Route as ApiPublicEfoImportFinancialTransactionsRouteImport } from './routes/api/public/efo/import/financial-transactions'
 import { Route as ApiPublicEfoExportTemplateRouteImport } from './routes/api/public/efo/export/template'
 
 const AuthRoute = AuthRouteImport.update({
@@ -111,6 +112,12 @@ const AuthenticatedAnaliseEfoRoute = AuthenticatedAnaliseEfoRouteImport.update({
   path: '/analise-efo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicEfoImportFinancialTransactionsRoute =
+  ApiPublicEfoImportFinancialTransactionsRouteImport.update({
+    id: '/api/public/efo/import/financial-transactions',
+    path: '/api/public/efo/import/financial-transactions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicEfoExportTemplateRoute =
   ApiPublicEfoExportTemplateRouteImport.update({
     id: '/api/public/efo/export/template',
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
   '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
+  '/api/public/efo/import/financial-transactions': typeof ApiPublicEfoImportFinancialTransactionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
   '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
+  '/api/public/efo/import/financial-transactions': typeof ApiPublicEfoImportFinancialTransactionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -173,6 +182,7 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
   '/api/public/efo/export/template': typeof ApiPublicEfoExportTemplateRoute
+  '/api/public/efo/import/financial-transactions': typeof ApiPublicEfoImportFinancialTransactionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/simulador'
     | '/api/public/efo/export/template'
+    | '/api/public/efo/import/financial-transactions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/simulador'
     | '/api/public/efo/export/template'
+    | '/api/public/efo/import/financial-transactions'
   id:
     | '__root__'
     | '/'
@@ -230,6 +242,7 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/simulador'
     | '/api/public/efo/export/template'
+    | '/api/public/efo/import/financial-transactions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -237,6 +250,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicEfoExportTemplateRoute: typeof ApiPublicEfoExportTemplateRoute
+  ApiPublicEfoImportFinancialTransactionsRoute: typeof ApiPublicEfoImportFinancialTransactionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -353,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnaliseEfoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/efo/import/financial-transactions': {
+      id: '/api/public/efo/import/financial-transactions'
+      path: '/api/public/efo/import/financial-transactions'
+      fullPath: '/api/public/efo/import/financial-transactions'
+      preLoaderRoute: typeof ApiPublicEfoImportFinancialTransactionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/efo/export/template': {
       id: '/api/public/efo/export/template'
       path: '/api/public/efo/export/template'
@@ -403,6 +424,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicEfoExportTemplateRoute: ApiPublicEfoExportTemplateRoute,
+  ApiPublicEfoImportFinancialTransactionsRoute:
+    ApiPublicEfoImportFinancialTransactionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
