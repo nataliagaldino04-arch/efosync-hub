@@ -13,15 +13,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSimuladorRouteImport } from './routes/_authenticated/simulador'
-import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPlanoAcaoRouteImport } from './routes/_authenticated/plano-acao'
-import { Route as AuthenticatedParcelamentosRouteImport } from './routes/_authenticated/parcelamentos'
 import { Route as AuthenticatedLancamentosRouteImport } from './routes/_authenticated/lancamentos'
-import { Route as AuthenticatedImportacaoRouteImport } from './routes/_authenticated/importacao'
-import { Route as AuthenticatedExportacaoRouteImport } from './routes/_authenticated/exportacao'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedContasReceberRouteImport } from './routes/_authenticated/contas-receber'
-import { Route as AuthenticatedContasPagarRouteImport } from './routes/_authenticated/contas-pagar'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedAnaliseEfoRouteImport } from './routes/_authenticated/analise-efo'
@@ -45,55 +39,22 @@ const AuthenticatedSimuladorRoute = AuthenticatedSimuladorRouteImport.update({
   path: '/simulador',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedPlanoAcaoRoute = AuthenticatedPlanoAcaoRouteImport.update({
   id: '/plano-acao',
   path: '/plano-acao',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedParcelamentosRoute =
-  AuthenticatedParcelamentosRouteImport.update({
-    id: '/parcelamentos',
-    path: '/parcelamentos',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedLancamentosRoute =
   AuthenticatedLancamentosRouteImport.update({
     id: '/lancamentos',
     path: '/lancamentos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedImportacaoRoute = AuthenticatedImportacaoRouteImport.update({
-  id: '/importacao',
-  path: '/importacao',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedExportacaoRoute = AuthenticatedExportacaoRouteImport.update({
-  id: '/exportacao',
-  path: '/exportacao',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedContasReceberRoute =
-  AuthenticatedContasReceberRouteImport.update({
-    id: '/contas-receber',
-    path: '/contas-receber',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedContasPagarRoute =
-  AuthenticatedContasPagarRouteImport.update({
-    id: '/contas-pagar',
-    path: '/contas-pagar',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -117,15 +78,9 @@ export interface FileRoutesByFullPath {
   '/analise-efo': typeof AuthenticatedAnaliseEfoRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
-  '/contas-pagar': typeof AuthenticatedContasPagarRoute
-  '/contas-receber': typeof AuthenticatedContasReceberRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/exportacao': typeof AuthenticatedExportacaoRoute
-  '/importacao': typeof AuthenticatedImportacaoRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
-  '/parcelamentos': typeof AuthenticatedParcelamentosRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
-  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
 }
 export interface FileRoutesByTo {
@@ -134,15 +89,9 @@ export interface FileRoutesByTo {
   '/analise-efo': typeof AuthenticatedAnaliseEfoRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
-  '/contas-pagar': typeof AuthenticatedContasPagarRoute
-  '/contas-receber': typeof AuthenticatedContasReceberRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/exportacao': typeof AuthenticatedExportacaoRoute
-  '/importacao': typeof AuthenticatedImportacaoRoute
   '/lancamentos': typeof AuthenticatedLancamentosRoute
-  '/parcelamentos': typeof AuthenticatedParcelamentosRoute
   '/plano-acao': typeof AuthenticatedPlanoAcaoRoute
-  '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/simulador': typeof AuthenticatedSimuladorRoute
 }
 export interface FileRoutesById {
@@ -153,15 +102,9 @@ export interface FileRoutesById {
   '/_authenticated/analise-efo': typeof AuthenticatedAnaliseEfoRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
-  '/_authenticated/contas-pagar': typeof AuthenticatedContasPagarRoute
-  '/_authenticated/contas-receber': typeof AuthenticatedContasReceberRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/exportacao': typeof AuthenticatedExportacaoRoute
-  '/_authenticated/importacao': typeof AuthenticatedImportacaoRoute
   '/_authenticated/lancamentos': typeof AuthenticatedLancamentosRoute
-  '/_authenticated/parcelamentos': typeof AuthenticatedParcelamentosRoute
   '/_authenticated/plano-acao': typeof AuthenticatedPlanoAcaoRoute
-  '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/simulador': typeof AuthenticatedSimuladorRoute
 }
 export interface FileRouteTypes {
@@ -172,15 +115,9 @@ export interface FileRouteTypes {
     | '/analise-efo'
     | '/clientes'
     | '/configuracoes'
-    | '/contas-pagar'
-    | '/contas-receber'
     | '/dashboard'
-    | '/exportacao'
-    | '/importacao'
     | '/lancamentos'
-    | '/parcelamentos'
     | '/plano-acao'
-    | '/relatorios'
     | '/simulador'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -189,15 +126,9 @@ export interface FileRouteTypes {
     | '/analise-efo'
     | '/clientes'
     | '/configuracoes'
-    | '/contas-pagar'
-    | '/contas-receber'
     | '/dashboard'
-    | '/exportacao'
-    | '/importacao'
     | '/lancamentos'
-    | '/parcelamentos'
     | '/plano-acao'
-    | '/relatorios'
     | '/simulador'
   id:
     | '__root__'
@@ -207,15 +138,9 @@ export interface FileRouteTypes {
     | '/_authenticated/analise-efo'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
-    | '/_authenticated/contas-pagar'
-    | '/_authenticated/contas-receber'
     | '/_authenticated/dashboard'
-    | '/_authenticated/exportacao'
-    | '/_authenticated/importacao'
     | '/_authenticated/lancamentos'
-    | '/_authenticated/parcelamentos'
     | '/_authenticated/plano-acao'
-    | '/_authenticated/relatorios'
     | '/_authenticated/simulador'
   fileRoutesById: FileRoutesById
 }
@@ -255,25 +180,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSimuladorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/relatorios': {
-      id: '/_authenticated/relatorios'
-      path: '/relatorios'
-      fullPath: '/relatorios'
-      preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/plano-acao': {
       id: '/_authenticated/plano-acao'
       path: '/plano-acao'
       fullPath: '/plano-acao'
       preLoaderRoute: typeof AuthenticatedPlanoAcaoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/parcelamentos': {
-      id: '/_authenticated/parcelamentos'
-      path: '/parcelamentos'
-      fullPath: '/parcelamentos'
-      preLoaderRoute: typeof AuthenticatedParcelamentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/lancamentos': {
@@ -283,39 +194,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLancamentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/importacao': {
-      id: '/_authenticated/importacao'
-      path: '/importacao'
-      fullPath: '/importacao'
-      preLoaderRoute: typeof AuthenticatedImportacaoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/exportacao': {
-      id: '/_authenticated/exportacao'
-      path: '/exportacao'
-      fullPath: '/exportacao'
-      preLoaderRoute: typeof AuthenticatedExportacaoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/contas-receber': {
-      id: '/_authenticated/contas-receber'
-      path: '/contas-receber'
-      fullPath: '/contas-receber'
-      preLoaderRoute: typeof AuthenticatedContasReceberRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/contas-pagar': {
-      id: '/_authenticated/contas-pagar'
-      path: '/contas-pagar'
-      fullPath: '/contas-pagar'
-      preLoaderRoute: typeof AuthenticatedContasPagarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/configuracoes': {
@@ -346,15 +229,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnaliseEfoRoute: typeof AuthenticatedAnaliseEfoRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
-  AuthenticatedContasPagarRoute: typeof AuthenticatedContasPagarRoute
-  AuthenticatedContasReceberRoute: typeof AuthenticatedContasReceberRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedExportacaoRoute: typeof AuthenticatedExportacaoRoute
-  AuthenticatedImportacaoRoute: typeof AuthenticatedImportacaoRoute
   AuthenticatedLancamentosRoute: typeof AuthenticatedLancamentosRoute
-  AuthenticatedParcelamentosRoute: typeof AuthenticatedParcelamentosRoute
   AuthenticatedPlanoAcaoRoute: typeof AuthenticatedPlanoAcaoRoute
-  AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSimuladorRoute: typeof AuthenticatedSimuladorRoute
 }
 
@@ -362,15 +239,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnaliseEfoRoute: AuthenticatedAnaliseEfoRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
-  AuthenticatedContasPagarRoute: AuthenticatedContasPagarRoute,
-  AuthenticatedContasReceberRoute: AuthenticatedContasReceberRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedExportacaoRoute: AuthenticatedExportacaoRoute,
-  AuthenticatedImportacaoRoute: AuthenticatedImportacaoRoute,
   AuthenticatedLancamentosRoute: AuthenticatedLancamentosRoute,
-  AuthenticatedParcelamentosRoute: AuthenticatedParcelamentosRoute,
   AuthenticatedPlanoAcaoRoute: AuthenticatedPlanoAcaoRoute,
-  AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSimuladorRoute: AuthenticatedSimuladorRoute,
 }
 
