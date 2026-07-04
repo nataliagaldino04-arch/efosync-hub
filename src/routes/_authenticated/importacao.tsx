@@ -86,13 +86,13 @@ function ImportPage() {
       if (clientName && !companyId) errors.push(`Cliente "${clientName}" não cadastrado`);
       const movType = String(norm["tipo"] ?? "").trim() || "Receita";
       if (!["Receita", "Despesa", "Conta a Receber", "Conta a Pagar", "Parcelamento", "Juros", "Ajuste"].includes(movType)) errors.push(`Tipo inválido: ${movType}`);
-      const orig = parseBRNumber(norm["valor_original"]);
+      const orig = parseBRNumber(norm["valor_original"] as string | number);
       if (orig <= 0) errors.push("Valor original obrigatório");
-      const due = parseBRDate(String(norm["data_vencimento"] ?? ""));
-      const comp = parseBRDate(String(norm["data_competencia"] ?? ""));
-      const pay = parseBRDate(String(norm["data_pagamento"] ?? ""));
-      const rate = parseBRNumber(norm["taxa_juros_mes"]);
-      const paid = parseBRNumber(norm["valor_pago"]);
+      const due = parseBRDate(String(norm["data_vencimento"] ?? "") || null);
+      const comp = parseBRDate(String(norm["data_competencia"] ?? "") || null);
+      const pay = parseBRDate(String(norm["data_pagamento"] ?? "") || null);
+      const rate = parseBRNumber(norm["taxa_juros_mes"] as string | number);
+      const paid = parseBRNumber(norm["valor_pago"] as string | number);
       const rawStatus = String(norm["status"] ?? "").trim();
       let status = rawStatus;
       if (parseBRBoolean(rawStatus)) status = "Pago";
@@ -107,7 +107,7 @@ function ImportPage() {
           category: String(norm["categoria"] ?? "") || null,
           description: String(norm["descricao"] ?? "") || null,
           original_value: orig,
-          installment_value: parseBRNumber(norm["valor_parcela"]),
+          installment_value: parseBRNumber(norm["valor_parcela"] as string | number),
           paid_value: paid,
           interest_rate_month: rate,
           interest_type: interestType,
@@ -132,15 +132,15 @@ function ImportPage() {
       if (!user) throw new Error("Não autenticado");
       const batch = await supabase.from("import_batches").insert({
         owner_id: user.id, file_name: fileName, total_rows: rows.length,
-        success_rows: valid.length, error_rows: invalid.length, status: "completed",
+        imported_rows: valid.length, error_rows: invalid.length, status: "completed",
       }).select().single();
       if (batch.error) throw batch.error;
       const batchId = batch.data.id;
       if (invalid.length > 0) {
         await supabase.from("import_errors").insert(invalid.map((r) => ({
           batch_id: batchId, owner_id: user.id, row_number: r.row,
-          error_message: r.errors.join("; "), row_data: r.data,
-        })));
+          error_message: r.errors.join("; "), raw_data: r.data as never,
+        })) as never);
       }
       if (valid.length > 0) {
         const payload = valid.map((r) => {
@@ -257,12 +257,12 @@ function ImportPage() {
                 <TableHead className="text-right">Erros</TableHead><TableHead>Status</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {(batches as { id: string; created_at: string; file_name: string; total_rows: number; success_rows: number; error_rows: number; status: string }[]).map((b) => (
+                {(batches as { id: string; created_at: string; file_name: string | null; total_rows: number; imported_rows: number; error_rows: number; status: string }[]).map((b) => (
                   <TableRow key={b.id}>
                     <TableCell>{new Date(b.created_at).toLocaleString("pt-BR")}</TableCell>
                     <TableCell>{b.file_name}</TableCell>
                     <TableCell className="text-right">{b.total_rows}</TableCell>
-                    <TableCell className="text-right text-success">{b.success_rows}</TableCell>
+                    <TableCell className="text-right text-success">{b.imported_rows}</TableCell>
                     <TableCell className="text-right text-destructive">{b.error_rows}</TableCell>
                     <TableCell><Badge variant="outline">{b.status}</Badge></TableCell>
                   </TableRow>
