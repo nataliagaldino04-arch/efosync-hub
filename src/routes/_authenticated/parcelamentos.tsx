@@ -572,8 +572,7 @@ function ParcelamentosPage() {
                               const info = computeUpdated({
                                 principal: Number(r.original_value),
                                 monthlyRatePct: Number(r.interest_rate_month ?? 0),
-                                type:
-                                  (r.interest_type as "simple" | "compound") || "simple",
+                                type: (r.interest_type as "simple" | "compound") || "simple",
                                 dueDate: r.due_date,
                                 paymentDate: null,
                                 paid: 0,
