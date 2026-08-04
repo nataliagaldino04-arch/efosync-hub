@@ -264,6 +264,13 @@ function ImportPage() {
     const buf = await f.arrayBuffer();
     const wb = XLSX.read(buf, { type: "array", cellDates: true });
     const ws = wb.Sheets[wb.SheetNames[0]];
+    // Células de data podem trazer formato americano (m/d/yy) do arquivo original.
+    // Forçamos ISO para que o texto gerado não perca dia/mês.
+    for (const addr of Object.keys(ws)) {
+      if (addr.startsWith("!")) continue;
+      const cell = (ws as Record<string, { t?: string; z?: string }>)[addr];
+      if (cell && cell.t === "d") cell.z = "yyyy-mm-dd";
+    }
     const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, {
       header: 1,
       defval: "",
