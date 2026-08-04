@@ -24,6 +24,7 @@ import { Route as AuthenticatedContasReceberRouteImport } from './routes/_authen
 import { Route as AuthenticatedContasPagarRouteImport } from './routes/_authenticated/contas-pagar'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedBalancoRouteImport } from './routes/_authenticated/balanco'
 import { Route as AuthenticatedAnaliseEfoRouteImport } from './routes/_authenticated/analise-efo'
 import { Route as ApiPublicEfoReportsReceivablesRouteImport } from './routes/api/public/efo/reports/receivables'
 import { Route as ApiPublicEfoReportsInterestRouteImport } from './routes/api/public/efo/reports/interest'
@@ -111,6 +112,11 @@ const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBalancoRoute = AuthenticatedBalancoRouteImport.update({
+  id: '/balanco',
+  path: '/balanco',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnaliseEfoRoute = AuthenticatedAnaliseEfoRouteImport.update({
   id: '/analise-efo',
   path: '/analise-efo',
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/analise-efo': typeof AuthenticatedAnaliseEfoRoute
+  '/balanco': typeof AuthenticatedBalancoRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas-pagar': typeof AuthenticatedContasPagarRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/analise-efo': typeof AuthenticatedAnaliseEfoRoute
+  '/balanco': typeof AuthenticatedBalancoRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/contas-pagar': typeof AuthenticatedContasPagarRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/analise-efo': typeof AuthenticatedAnaliseEfoRoute
+  '/_authenticated/balanco': typeof AuthenticatedBalancoRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/contas-pagar': typeof AuthenticatedContasPagarRoute
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/analise-efo'
+    | '/balanco'
     | '/clientes'
     | '/configuracoes'
     | '/contas-pagar'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/analise-efo'
+    | '/balanco'
     | '/clientes'
     | '/configuracoes'
     | '/contas-pagar'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/analise-efo'
+    | '/_authenticated/balanco'
     | '/_authenticated/clientes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/contas-pagar'
@@ -415,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/balanco': {
+      id: '/_authenticated/balanco'
+      path: '/balanco'
+      fullPath: '/balanco'
+      preLoaderRoute: typeof AuthenticatedBalancoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analise-efo': {
       id: '/_authenticated/analise-efo'
       path: '/analise-efo'
@@ -469,6 +488,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnaliseEfoRoute: typeof AuthenticatedAnaliseEfoRoute
+  AuthenticatedBalancoRoute: typeof AuthenticatedBalancoRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedContasPagarRoute: typeof AuthenticatedContasPagarRoute
@@ -485,6 +505,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnaliseEfoRoute: AuthenticatedAnaliseEfoRoute,
+  AuthenticatedBalancoRoute: AuthenticatedBalancoRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedContasPagarRoute: AuthenticatedContasPagarRoute,
