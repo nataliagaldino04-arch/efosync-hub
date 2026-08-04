@@ -87,12 +87,17 @@ export function parseBRDate(
   // ISO — valida ano/mês/dia (rejeita 2026-02-31 etc.)
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return validIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
-  // dd/mm/yyyy or dd/mm/yy
-  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  // dd/mm/yyyy, dd/mm/yy — com desambiguação para arquivos em formato americano (m/d/yy)
+  const dmy = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
   if (dmy) {
-    const [, d, m, y] = dmy;
+    const [, a, b, y] = dmy;
     const yr = y.length === 2 ? 2000 + Number(y) : Number(y);
-    return validIsoDate(yr, Number(m), Number(d));
+    const n1 = Number(a);
+    const n2 = Number(b);
+    // Padrão brasileiro (dia/mês) tem prioridade; só assume mês/dia quando dia/mês é impossível.
+    const br = validIsoDate(yr, n2, n1);
+    if (br) return br;
+    return validIsoDate(yr, n1, n2);
   }
   // dd/mmm ex: 12/jun
   const dmm = s.match(/^(\d{1,2})\/([a-zA-Zç]+)(?:\/(\d{2,4}))?$/);
