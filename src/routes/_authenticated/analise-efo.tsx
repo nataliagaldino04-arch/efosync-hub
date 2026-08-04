@@ -32,6 +32,9 @@ import {
 import { formatBRL, formatPercent } from "@/lib/br-format";
 import { computeUpdated } from "@/lib/finance";
 import { RECEIVABLE_TYPES, PAYABLE_TYPES } from "@/lib/efo-schema";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { buildDre, computeIndexes, sumDre, type BalanceValues } from "@/lib/dre";
 
 export const Route = createFileRoute("/_authenticated/analise-efo")({
   head: () => ({ meta: [{ title: "Análise EFO — EFO" }] }),
@@ -39,12 +42,15 @@ export const Route = createFileRoute("/_authenticated/analise-efo")({
 });
 
 const REVENUE_TYPES = RECEIVABLE_TYPES as unknown as string[];
-const EXPENSE_TYPES = PAYABLE_TYPES as unknown as string[];
-const FIXED_CATS = ["Aluguel", "Energia/Água", "Internet", "Salários", "Sistemas", "Contabilidade"];
+
+const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
+  new Date(2024, i, 1).toLocaleDateString("pt-BR", { month: "long" }),
+);
 
 function EFOPage() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [companyId, setCompanyId] = useState<string>("all");
+  const [indexMonth, setIndexMonth] = useState<string>("all");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-list"],
@@ -67,49 +73,81 @@ function EFOPage() {
     },
   });
 
-  const monthly = useMemo(() => {
-    const rows = Array.from({ length: 12 }, (_, i) => ({
-      mes: i + 1,
-      label: new Date(year, i, 1).toLocaleDateString("pt-BR", { month: "short" }),
-      receitas: 0,
-      despesasFixas: 0,
-      despesasVariaveis: 0,
-      despesas: 0,
-      resultado: 0,
-      juros: 0,
-      margem: 0,
-    }));
+  const dre = useMemo(
+    () => buildDre(txs as Array<Record<string, unknown>>, year),
+    [txs, year],
+  );
+
+  const monthly = useMemo(
+    () =>
+      dre.map((m) => ({
+        mes: m.month,
+        label: m.label,
+        receitas: m.receitaBruta,
+        despesasFixas: m.despesasFixas,
+        despesasVariaveis: m.despesasVariaveis,
+        despesas: m.receitaBruta - m.resultadoLiquido,
+        resultado: m.resultadoLiquido,
+        juros: m.juros,
+        margem: m.receitaBruta > 0 ? (m.resultadoLiquido / m.receitaBruta) * 100 : 0,
+      })),
+    [dre],
+  );
+
+  const { data: sheets = [] } = useQuery({
+    queryKey: ["balance-sheets-efo", year, companyId],
+    queryFn: async () => {
+      let q = supabase.from("balance_sheets").select("*").eq("period_year", year);
+      q = companyId === "all" ? q.is("company_id", null) : q.eq("company_id", companyId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const receivablesOpen = useMemo(() => {
+    let open = 0;
     for (const t of txs as Array<Record<string, unknown>>) {
+      if (!REVENUE_TYPES.includes(String(t.movement_type))) continue;
+      if (indexMonth !== "all") {
+        const d = new Date(String(t.due_date) + "T00:00:00");
+        if (isNaN(d.getTime()) || d.getMonth() + 1 !== Number(indexMonth)) continue;
+      }
       const info = computeUpdated({
-        principal: Number(t.original_value),
-        monthlyRatePct: Number(t.interest_rate_month),
+        principal: Number(t.original_value ?? 0),
+        monthlyRatePct: Number(t.interest_rate_month ?? 0),
         type: (t.interest_type as "simple" | "compound") || "simple",
         dueDate: (t.due_date as string) ?? null,
         paymentDate: (t.payment_date as string) ?? null,
-        paid: Number(t.paid_value),
+        paid: Number(t.paid_value ?? 0),
       });
-      const d = new Date(String(t.due_date) + "T00:00:00");
-      if (isNaN(d.getTime()) || d.getFullYear() !== year) continue;
-      const row = rows[d.getMonth()];
-      row.juros += info.interest;
-      if (REVENUE_TYPES.includes(String(t.movement_type))) {
-        row.receitas += info.updated;
-      } else if (EXPENSE_TYPES.includes(String(t.movement_type))) {
-        const cat = String(t.category ?? "");
-        const costType = String(t.cost_type ?? "").toLowerCase();
-        const isFixed = costType ? costType.startsWith("fix") : FIXED_CATS.includes(cat);
-        if (isFixed) row.despesasFixas += info.updated;
-        else row.despesasVariaveis += info.updated;
-        row.despesas += info.updated;
-      }
-      // Tipos como "Ajuste" não entram automaticamente no DRE.
+      open += info.open;
     }
-    for (const r of rows) {
-      r.resultado = r.receitas - r.despesas;
-      r.margem = r.receitas > 0 ? (r.resultado / r.receitas) * 100 : 0;
-    }
-    return rows;
-  }, [txs, year]);
+    return open;
+  }, [txs, indexMonth]);
+
+  const indexes = useMemo(() => {
+    const selected =
+      indexMonth === "all" ? sumDre(dre) : (dre[Number(indexMonth) - 1] ?? sumDre(dre));
+    const sheetRow =
+      indexMonth === "all"
+        ? ((sheets as Record<string, unknown>[])
+            .slice()
+            .sort((a, b) => Number(b.period_month) - Number(a.period_month))[0] ?? null)
+        : ((sheets as Record<string, unknown>[]).find(
+            (s) => Number(s.period_month) === Number(indexMonth),
+          ) ?? null);
+    const balance = sheetRow ? (sheetRow as unknown as BalanceValues) : null;
+    return {
+      hasBalance: !!sheetRow,
+      list: computeIndexes({
+        dre: selected,
+        balance,
+        receivablesOpen,
+        months: indexMonth === "all" ? 12 : 1,
+      }),
+    };
+  }, [dre, sheets, indexMonth, receivablesOpen]);
 
   const totalRec = monthly.reduce((s, r) => s + r.receitas, 0);
   const totalDesp = monthly.reduce((s, r) => s + r.despesas, 0);
@@ -170,6 +208,86 @@ function EFOPage() {
               value={formatPercent(margemAvg)}
               color={margemAvg >= 0 ? "text-success" : "text-destructive"}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle>Índices econômico-financeiros</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Período</label>
+              <Select value={indexMonth} onValueChange={setIndexMonth}>
+                <SelectTrigger className="w-44 capitalize">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Ano inteiro</SelectItem>
+                  {MONTH_NAMES.map((m, i) => (
+                    <SelectItem key={m} value={String(i + 1)} className="capitalize">
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {!indexes.hasBalance && (
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
+                Sem Balanço Gerencial neste período — índices de liquidez e rentabilidade ficam
+                indisponíveis.
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/balanco">Preencher balanço</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {indexes.list.map((idx) => (
+              <div
+                key={idx.key}
+                className={`rounded-lg border p-3 ${
+                  idx.value === null ? "opacity-50" : ""
+                }`}
+                title={idx.hint}
+              >
+                <div className="text-xs text-muted-foreground">{idx.label}</div>
+                <div className="text-lg font-semibold">
+                  {idx.value === null
+                    ? "—"
+                    : idx.format === "percent"
+                      ? formatPercent(idx.value)
+                      : idx.format === "currency"
+                        ? formatBRL(idx.value)
+                        : idx.format === "days"
+                          ? `${idx.value.toFixed(0)} dias`
+                          : `${idx.value.toFixed(2)}x`}
+                </div>
+                <div
+                  className={`text-xs mt-1 ${
+                    idx.verdict === "bom"
+                      ? "text-success"
+                      : idx.verdict === "atencao"
+                        ? "text-warning"
+                        : idx.verdict === "critico"
+                          ? "text-destructive"
+                          : "text-muted-foreground"
+                  }`}
+                >
+                  {idx.verdict === "bom"
+                    ? "Bom"
+                    : idx.verdict === "atencao"
+                      ? "Atenção"
+                      : idx.verdict === "critico"
+                        ? "Crítico"
+                        : idx.needsBalance
+                          ? "Depende do balanço"
+                          : "Sem base de cálculo"}
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
