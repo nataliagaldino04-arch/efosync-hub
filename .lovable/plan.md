@@ -1,63 +1,57 @@
-# EFO — Análise Econômica, Financeira e Operacional
+# Importação flexível: múltiplos modelos de planilha
 
-Sistema web completo para substituir planilhas financeiras manuais, com autenticação, banco de dados, dashboard, importação/exportação, cálculos automáticos de juros e relatórios.
+Objetivo: qualquer planilha "de mercado" (como a Contas a Pagar 4) passa a ser importável, sem depender do modelo EFO de 21 colunas. Nenhum dado é importado automaticamente — o motor de leitura é que fica pronto.
 
-## Escopo e abordagem
+## 1. Perfis de importação
 
-O pedido é grande. Proponho entregar em **3 fases** para garantir qualidade em cada etapa. Cada fase é utilizável de forma independente.
+A tela de importação passa a começar pela escolha do **tipo de dado**:
 
----
+- Contas a Pagar
+- Contas a Receber
+- Parcelamentos / Financiamentos
+- Balanço Gerencial (Ativo / Passivo / Patrimônio)
+- Padrão EFO (o modelo atual de 21 colunas)
 
-## Fase 1 — Fundação (essencial para funcionar)
+Para cada tipo existem **perfis de layout** reconhecidos automaticamente. O primeiro perfil novo é o do arquivo que você enviou (Competência, Vencimento, CPF/CNPJ Fornecedor, Valor, Forma de Pgto, Tipo, Classificação, Descrição, Categoria, Pagamento, Clínica, Observações, Valor Total). Ao subir o arquivo o sistema:
 
-**Backend (Lovable Cloud + Supabase):**
-- Habilitar Lovable Cloud
-- Autenticação email/senha (login obrigatório, RLS em todas as tabelas, cada usuário só vê seus dados via `owner_id = auth.uid()`)
-- Migrations criando todas as tabelas do briefing: `companies`, `financial_transactions`, `import_batches`, `import_errors`, `categories`, `efo_monthly_analysis`, `action_plans_5w2h` (com coluna `owner_id` adicionada para RLS)
-- Seed de categorias padrão (receitas, despesas fixas, variáveis)
-- Trigger para `updated_at` e para calcular `status` automaticamente
+1. localiza a linha de cabeçalho mesmo com linhas em branco ou títulos acima;
+2. compara os cabeçalhos com os perfis conhecidos e escolhe o mais parecido;
+3. mostra "Modelo detectado: Contas a Pagar", com opção de trocar o perfil ou usar o mapeamento manual coluna-a-coluna que já existe hoje.
 
-**Design system:**
-- Paleta clara e profissional (fundo claro, verde=pago, vermelho=vencido, amarelo=atenção, azul=info) via tokens `oklch` em `src/styles.css`
-- Layout com **sidebar** colapsável (shadcn sidebar) contendo os 13 itens do menu
-- Componentes reutilizáveis: DataTable com busca/filtro/ordenação, StatCard, FilterBar, ExportButton
+Acrescentar novos modelos no futuro passa a ser apenas adicionar uma entrada nessa lista.
 
-**Módulos funcionais nesta fase:**
-1. **Auth** (`/auth`) — login/cadastro
-2. **Dashboard** (`/`) — cards principais + gráficos (Recharts): Receitas x Despesas, Fluxo de caixa, Juros acumulados, Categorias. Filtros por cliente, período, status, categoria.
-3. **Clientes/Empresas** (`/clientes`) — CRUD completo
-4. **Lançamentos Financeiros** (`/lancamentos`) — CRUD com todos os campos, status automático, edição rápida, duplicar, excluir, marcar como pago, filtros
-5. **Simulador de Juros** (`/simulador`) — juros simples e composto, gráfico de evolução mensal
+## 2. Regras de leitura do modelo Contas a Pagar
 
-## Fase 2 — Parcelamentos, Importação/Exportação, Relatórios
+- `Descrição` vira o nome do fornecedor/cliente, com cadastro criado automaticamente quando não existir; `CPF/CNPJ Fornecedor` alimenta o documento quando preenchido.
+- `Vencimento` aceita `16/03/26` (ano de 2 dígitos), `12/06/2026`, `12/jun` e datas nativas do Excel.
+- `Competência` aceita `FEV/2026`, `DEZ/2025`, `-` e vazio (nesse caso usa o mês do vencimento).
+- `Valor` aceita `154.9`, `48,07` e `R$ 1.234,56` — inclusive misturados na mesma coluna.
+- `Pagamento` preenchido (data ou data/hora) marca o lançamento como pago, com data e valor pago; vazio deixa em aberto, e vencido/a vencer continua sendo calculado automaticamente.
+- `Forma de Pgto`, `Observações`, `Clínica` e `Classificação` são preservadas (forma de pagamento, observações e centro de custo).
+- O tipo de movimento é fixado como despesa, então tudo aparece em **Contas a Pagar**, nos **Relatórios** como despesa e na **Análise EFO** como despesa.
 
-6. **Parcelamentos / PMT** (`/parcelamentos`) — gerar parcelas automaticamente, marcar pagas, pagamento parcial, recalcular juros
-7. **Contas a Receber** e **Contas a Pagar** — views filtradas de lançamentos
-8. **Importação de Planilhas** (`/importacao`) — upload XLSX/CSV via SheetJS, mapeamento de colunas, prévia, validações (moeda BR, datas BR incluindo `12/jun`, status "pago/sim/não"), histórico em `import_batches`, download de erros
-9. **Exportação** (`/exportacao`) — modelo de importação, dados no padrão EFO, XLSX/CSV
-10. **Relatórios** (`/relatorios`) — financeiro mensal, contas a receber, juros, EFO (econômico/financeiro/operacional), inadimplência por faixa
+## 3. Classificação Fixo/Variável e grupos do DRE
 
-## Fase 3 — Análise EFO, Plano de Ação, API
+- A coluna `Tipo` (`Custo Fixo` / `Custo Variável`) passa a ser gravada no lançamento, e a Análise EFO usa esse campo em vez da lista fixa de categorias — despesas fixas e variáveis passam a separar corretamente.
+- Cada categoria da planilha (SALÁRIO, IPTU, MATERIAIS ODONTOLÓGICOS, LABORATÓRIO/PROTÉTICO, DESPESA RH...) é ligada a um **grupo do DRE** do modelo EFO: Custo da Venda, Impostos, Despesas Comerciais, Despesas Administrativas, Despesas com Pessoal, Despesas Tributárias, Dívidas e Investimentos.
+- Esse mapeamento aparece em uma etapa da importação, já pré-sugerido por palavras-chave, editável, e fica **memorizado** — na próxima importação as mesmas categorias já vêm resolvidas.
+- Categoria sem grupo não bloqueia a importação: entra como "Não classificado" e pode ser ajustada depois em Configurações.
 
-11. **Análise EFO** (`/analise-efo`) — cards, gráficos e tabela detalhada das 3 dimensões
-12. **Plano de Ação 5W2H** (`/plano-acao`) — CRUD, cálculo de dias restantes, criação a partir de relatórios
-13. **Configurações** (`/configuracoes`) — categorias, centros de custo, preferências
-14. **API pública** — server routes em `/api/public/import/financial-transactions` (POST com HMAC), `/api/public/export/template`, `/api/public/reports/*`
+## 4. Preenchimento manual
+
+- Na prévia, linhas com pendências (sem fornecedor, sem categoria, sem grupo) podem ser corrigidas ali mesmo, célula por célula, antes de gravar.
+- Cada tipo de importação também ganha um botão "preencher manualmente", que abre o formulário correspondente em vez de exigir planilha — inclusive para Ativo / Passivo / Patrimônio.
+
+## 5. Validação
+
+Depois de implementar: build e lint limpos, e teste de leitura do arquivo Contas a Pagar 4 até a prévia (sem gravar), conferindo datas `16/03/26`, valores com vírgula e ponto, pagos vs. em aberto e a separação fixo/variável.
 
 ## Detalhes técnicos
 
-- **Stack:** TanStack Start + React 19 + Tailwind v4 + shadcn + Lovable Cloud (Supabase)
-- **Rotas protegidas:** `src/routes/_authenticated/*`; `/auth` é público
-- **Server functions:** `createServerFn` + `requireSupabaseAuth` para leituras/escritas do usuário
-- **Cálculos:** helpers puros em `src/lib/finance.ts` (juros simples/composto, dias de atraso, status, inadimplência)
-- **Parsing BR:** helpers em `src/lib/br-format.ts` (moeda `R$ 1.234,56`, datas `12/06/2026` e `12/jun`, booleans "sim/não/pago")
-- **Gráficos:** Recharts
-- **Planilhas:** biblioteca `xlsx` (SheetJS)
-
-## O que quero confirmar antes de começar
-
-**Sugiro começar pela Fase 1 agora** (fundação + 5 módulos principais já dão um sistema utilizável de ponta a ponta: cadastrar cliente → lançar movimento → ver dashboard → simular juros). Fases 2 e 3 seguem em turnos seguintes.
-
-Se preferir, posso tentar tudo em um único passo — porém o risco de bugs, telas incompletas e problemas de build aumenta bastante dado o volume.
-
-**Confirma que sigo com a Fase 1?** (ou me diga se prefere reordenar prioridades — por exemplo, importação antes do simulador).
+- `src/lib/import-profiles.ts` (novo): registro de perfis `{ id, tipo, matchHeaders, columnMap, transforms, defaults }`, detector por similaridade de cabeçalho e localizador da linha de cabeçalho.
+- `src/lib/br-format.ts`: aceitar ano de 2 dígitos, competência `MMM/AAAA` e timestamps `AAAA-MM-DD HH:MM:SS`.
+- `src/lib/efo-schema.ts`: `normalizeEfoRow` ganha overrides de perfil (tipo de movimento fixo, status derivado da data de pagamento) sem alterar o comportamento do padrão EFO atual.
+- `src/routes/_authenticated/importacao.tsx`: etapa de tipo/perfil, etapa de mapeamento categoria → grupo do DRE, prévia editável.
+- `src/routes/api/public/efo/import/financial-transactions.ts`: aceita `profile` no corpo e reusa o mesmo motor.
+- Banco (migração): colunas `cost_type` (fixo/variável) e `dre_group` em `financial_transactions`; tabela `dre_category_map` (proprietário, categoria, grupo, tipo de custo) com RLS por proprietário e GRANTs.
+- Análise EFO e Relatórios passam a agrupar por `cost_type`/`dre_group` quando presentes, com fallback para a lógica atual.
