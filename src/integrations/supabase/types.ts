@@ -76,6 +76,110 @@ export type Database = {
           },
         ]
       }
+      balance_sheets: {
+        Row: {
+          ac_adiantamentos: number
+          ac_aplicacoes: number
+          ac_caixa_bancos: number
+          ac_contas_receber: number
+          ac_estoques: number
+          ac_outros: number
+          anc_imobilizado: number
+          anc_intangivel: number
+          anc_investimentos: number
+          anc_outros: number
+          company_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          owner_id: string
+          pc_emprestimos_curto: number
+          pc_fornecedores: number
+          pc_obrigacoes_trabalhistas: number
+          pc_obrigacoes_tributarias: number
+          pc_outros: number
+          period_month: number
+          period_year: number
+          pl_capital_social: number
+          pl_lucros_acumulados: number
+          pl_resultado_periodo: number
+          pnc_emprestimos_longo: number
+          pnc_outros: number
+          pnc_parcelamentos_tributarios: number
+          updated_at: string
+        }
+        Insert: {
+          ac_adiantamentos?: number
+          ac_aplicacoes?: number
+          ac_caixa_bancos?: number
+          ac_contas_receber?: number
+          ac_estoques?: number
+          ac_outros?: number
+          anc_imobilizado?: number
+          anc_intangivel?: number
+          anc_investimentos?: number
+          anc_outros?: number
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          pc_emprestimos_curto?: number
+          pc_fornecedores?: number
+          pc_obrigacoes_trabalhistas?: number
+          pc_obrigacoes_tributarias?: number
+          pc_outros?: number
+          period_month: number
+          period_year: number
+          pl_capital_social?: number
+          pl_lucros_acumulados?: number
+          pl_resultado_periodo?: number
+          pnc_emprestimos_longo?: number
+          pnc_outros?: number
+          pnc_parcelamentos_tributarios?: number
+          updated_at?: string
+        }
+        Update: {
+          ac_adiantamentos?: number
+          ac_aplicacoes?: number
+          ac_caixa_bancos?: number
+          ac_contas_receber?: number
+          ac_estoques?: number
+          ac_outros?: number
+          anc_imobilizado?: number
+          anc_intangivel?: number
+          anc_investimentos?: number
+          anc_outros?: number
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          pc_emprestimos_curto?: number
+          pc_fornecedores?: number
+          pc_obrigacoes_trabalhistas?: number
+          pc_obrigacoes_tributarias?: number
+          pc_outros?: number
+          period_month?: number
+          period_year?: number
+          pl_capital_social?: number
+          pl_lucros_acumulados?: number
+          pl_resultado_periodo?: number
+          pnc_emprestimos_longo?: number
+          pnc_outros?: number
+          pnc_parcelamentos_tributarios?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_sheets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
