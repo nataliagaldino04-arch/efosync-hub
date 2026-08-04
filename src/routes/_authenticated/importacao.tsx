@@ -459,6 +459,12 @@ function ImportPage() {
                 Preencher manualmente
               </Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link to="/balanco">
+                <PencilLine className="h-4 w-4 mr-2" />
+                Balanço Gerencial
+              </Link>
+            </Button>
             <Button variant="outline" onClick={downloadTemplate}>
               <Download className="h-4 w-4 mr-2" />
               Baixar modelo
