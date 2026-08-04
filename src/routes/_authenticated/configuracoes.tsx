@@ -23,9 +23,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, LogOut } from "lucide-react";
+import { Plus, Trash2, LogOut, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { DRE_GROUPS, COST_TYPES, suggestDreGroup } from "@/lib/import-profiles";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — EFO" }] }),
@@ -43,6 +44,7 @@ function ConfigPage() {
   const navigate = useNavigate();
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState("revenue");
+  const [mapCategory, setMapCategory] = useState("");
 
   const { data: user } = useQuery({
     queryKey: ["current-user"],
@@ -92,6 +94,81 @@ function ConfigPage() {
       qc.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Removida");
     },
+  });
+
+  const { data: dreMap = [] } = useQuery({
+    queryKey: ["dre-map"],
+    queryFn: async () =>
+      (await supabase.from("dre_category_map").select("*").order("category")).data ?? [],
+  });
+
+  const saveMap = useMutation({
+    mutationFn: async (input: { id?: string; category: string; group: string; cost?: string }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+      if (!input.category.trim()) throw new Error("Categoria obrigatória");
+      if (input.id) {
+        const { error } = await supabase
+          .from("dre_category_map")
+          .update({ dre_group: input.group, cost_type: input.cost ?? null } as never)
+          .eq("id", input.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("dre_category_map").insert({
+          owner_id: user.id,
+          category: input.category.trim(),
+          dre_group: input.group,
+          cost_type: input.cost ?? null,
+        } as never);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dre-map"] });
+      setMapCategory("");
+      toast.success("Mapeamento salvo");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const delMap = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("dre_category_map").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["dre-map"] });
+      toast.success("Mapeamento removido");
+    },
+  });
+
+  const reapply = useMutation({
+    mutationFn: async () => {
+      let touched = 0;
+      for (const m of dreMap as {
+        category: string;
+        dre_group: string;
+        cost_type: string | null;
+      }[]) {
+        const patch: Record<string, string> = { dre_group: m.dre_group };
+        if (m.cost_type) patch.cost_type = m.cost_type;
+        const { data, error } = await supabase
+          .from("financial_transactions")
+          .update(patch as never)
+          .eq("category", m.category)
+          .select("id");
+        if (error) throw error;
+        touched += data?.length ?? 0;
+      }
+      return touched;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries();
+      toast.success(`${n} lançamento(s) reclassificado(s)`);
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   async function signOut() {
@@ -210,6 +287,134 @@ function ConfigPage() {
                   </TableCell>
                 </TableRow>
               ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <div>
+            <CardTitle>Categoria → grupo do DRE</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Define em qual linha do DRE cada categoria entra e se o custo é fixo ou variável.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => reapply.mutate()}
+            disabled={reapply.isPending || dreMap.length === 0}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reaplicar aos lançamentos
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="space-y-2 min-w-52">
+              <Label>Nova categoria</Label>
+              <Input
+                value={mapCategory}
+                onChange={(e) => setMapCategory(e.target.value)}
+                placeholder="ex.: MATERIAIS ODONTOLÓGICOS"
+              />
+            </div>
+            <Button
+              onClick={() =>
+                saveMap.mutate({
+                  category: mapCategory,
+                  group: suggestDreGroup(mapCategory),
+                })
+              }
+              disabled={saveMap.isPending}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar
+            </Button>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Grupo do DRE</TableHead>
+                <TableHead>Tipo de custo</TableHead>
+                <TableHead className="w-16"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(
+                dreMap as {
+                  id: string;
+                  category: string;
+                  dre_group: string;
+                  cost_type: string | null;
+                }[]
+              ).map((m) => (
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium">{m.category}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={m.dre_group}
+                      onValueChange={(v) =>
+                        saveMap.mutate({
+                          id: m.id,
+                          category: m.category,
+                          group: v,
+                          cost: m.cost_type ?? undefined,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-64">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DRE_GROUPS.map((g) => (
+                          <SelectItem key={g} value={g}>
+                            {g}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={m.cost_type ?? "__none__"}
+                      onValueChange={(v) =>
+                        saveMap.mutate({
+                          id: m.id,
+                          category: m.category,
+                          group: m.dre_group,
+                          cost: v === "__none__" ? undefined : v,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-36">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Não definido</SelectItem>
+                        {COST_TYPES.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {c}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Button size="icon" variant="ghost" onClick={() => delMap.mutate(m.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {dreMap.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                    Nenhuma categoria mapeada ainda — o mapeamento é criado na importação ou aqui.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -37,6 +37,8 @@ import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
 import { RECEIVABLE_TYPES, PAYABLE_TYPES } from "@/lib/efo-schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { buildDre, sumDre, DRE_LINES } from "@/lib/dre";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatórios — EFO" }] }),
@@ -52,6 +54,7 @@ function ReportsPage() {
   const [from, setFrom] = useState(firstDay);
   const [to, setTo] = useState(lastDay);
   const [companyId, setCompanyId] = useState<string>("all");
+  const dreYear = Number(from.slice(0, 4)) || today.getFullYear();
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-list"],
@@ -202,6 +205,26 @@ function ReportsPage() {
   const totRec = enriched.filter((t) => t.isRevenue).reduce((s, t) => s + t.updated, 0);
   const totDesp = enriched.filter((t) => t.isExpense).reduce((s, t) => s + t.updated, 0);
 
+  const { data: dreTxs = [] } = useQuery({
+    queryKey: ["dre-tx", dreYear, companyId],
+    queryFn: async () => {
+      let q = supabase
+        .from("financial_transactions")
+        .select("*")
+        .gte("due_date", `${dreYear}-01-01`)
+        .lte("due_date", `${dreYear}-12-31`);
+      if (companyId !== "all") q = q.eq("company_id", companyId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const dreMonths = useMemo(
+    () => buildDre(dreTxs as Record<string, unknown>[], dreYear),
+    [dreTxs, dreYear],
+  );
+  const dreTotal = useMemo(() => sumDre(dreMonths), [dreMonths]);
+
   return (
     <>
       <PageHeader title="Relatórios" description="Análises financeiras por período e cliente." />
@@ -247,84 +270,151 @@ function ReportsPage() {
           </div>
         </CardContent>
       </Card>
-
-      <div className="grid gap-4 lg:grid-cols-2 mb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Fluxo mensal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthly}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="mes" />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Legend />
-                <Bar dataKey="receitas" fill="var(--success)" name="Receitas" />
-                <Bar dataKey="despesas" fill="var(--destructive)" name="Despesas" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Inadimplência (aging)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={aging}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="faixa" />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Bar dataKey="valor" fill="var(--warning)" name="Em aberto" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Ranking por cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="text-right">Lançamentos</TableHead>
-                  <TableHead className="text-right">Total atualizado</TableHead>
-                  <TableHead className="text-right">Juros</TableHead>
-                  <TableHead className="text-right">Em aberto</TableHead>
-                  <TableHead className="w-32"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {byClient.map((c) => (
-                  <TableRow key={c.cliente}>
-                    <TableCell>{c.cliente}</TableCell>
-                    <TableCell className="text-right">{c.qtd}</TableCell>
-                    <TableCell className="text-right">{formatBRL(c.total)}</TableCell>
-                    <TableCell className="text-right text-warning">{formatBRL(c.juros)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatBRL(c.aberto)}</TableCell>
-                    <TableCell>
-                      {c.aberto > 0 && (
-                        <Button size="sm" variant="outline" onClick={() => createAction(c)}>
-                          <Target className="h-3.5 w-3.5 mr-1" />
-                          5W2H
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      <Tabs defaultValue="fluxo" className="mb-4">
+        <TabsList>
+          <TabsTrigger value="fluxo">Fluxo e inadimplência</TabsTrigger>
+          <TabsTrigger value="dre">DRE Gerencial</TabsTrigger>
+        </TabsList>
+        <TabsContent value="fluxo" className="mt-4">
+          <div className="grid gap-4 lg:grid-cols-2 mb-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Fluxo mensal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={monthly}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="mes" />
+                    <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => formatBRL(v)} />
+                    <Legend />
+                    <Bar dataKey="receitas" fill="var(--success)" name="Receitas" />
+                    <Bar dataKey="despesas" fill="var(--destructive)" name="Despesas" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Inadimplência (aging)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={aging}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="faixa" />
+                    <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => formatBRL(v)} />
+                    <Bar dataKey="valor" fill="var(--warning)" name="Em aberto" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Ranking por cliente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead className="text-right">Lançamentos</TableHead>
+                      <TableHead className="text-right">Total atualizado</TableHead>
+                      <TableHead className="text-right">Juros</TableHead>
+                      <TableHead className="text-right">Em aberto</TableHead>
+                      <TableHead className="w-32"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {byClient.map((c) => (
+                      <TableRow key={c.cliente}>
+                        <TableCell>{c.cliente}</TableCell>
+                        <TableCell className="text-right">{c.qtd}</TableCell>
+                        <TableCell className="text-right">{formatBRL(c.total)}</TableCell>
+                        <TableCell className="text-right text-warning">
+                          {formatBRL(c.juros)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatBRL(c.aberto)}
+                        </TableCell>
+                        <TableCell>
+                          {c.aberto > 0 && (
+                            <Button size="sm" variant="outline" onClick={() => createAction(c)}>
+                              <Target className="h-3.5 w-3.5 mr-1" />
+                              5W2H
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="dre" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>DRE Gerencial — {dreYear}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-64">Linha</TableHead>
+                      {dreMonths.map((m) => (
+                        <TableHead key={m.month} className="text-right capitalize">
+                          {m.label}
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="text-right">% Rec.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {DRE_LINES.map((line) => {
+                      const total = dreTotal[line.key];
+                      const pct =
+                        dreTotal.receitaBruta > 0 ? (total / dreTotal.receitaBruta) * 100 : 0;
+                      const strong = line.kind === "subtotal" || line.kind === "result";
+                      return (
+                        <TableRow
+                          key={line.key}
+                          className={strong ? "bg-muted/40 font-medium" : undefined}
+                        >
+                          <TableCell>{line.label}</TableCell>
+                          {dreMonths.map((m) => (
+                            <TableCell key={m.month} className="text-right whitespace-nowrap">
+                              {formatBRL(m[line.key])}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right whitespace-nowrap font-medium">
+                            {formatBRL(total)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {pct.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Cada linha usa o grupo do DRE gravado no lançamento. O ano segue a data inicial do
+                filtro acima.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

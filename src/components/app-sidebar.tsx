@@ -14,6 +14,7 @@ import {
   ListChecks,
   Settings,
   LineChart,
+  Scale,
 } from "lucide-react";
 import {
   Sidebar,
@@ -38,6 +39,7 @@ const items = [
   { title: "Importação", url: "/importacao", icon: FileUp },
   { title: "Exportação", url: "/exportacao", icon: FileDown },
   { title: "Análise EFO", url: "/analise-efo", icon: BarChart3 },
+  { title: "Balanço Gerencial", url: "/balanco", icon: Scale },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
   { title: "Plano de Ação 5W2H", url: "/plano-acao", icon: ListChecks },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
