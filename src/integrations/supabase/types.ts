@@ -148,6 +148,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dre_category_map: {
+        Row: {
+          category: string
+          cost_type: string | null
+          created_at: string
+          dre_group: string
+          id: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          cost_type?: string | null
+          created_at?: string
+          dre_group: string
+          id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cost_type?: string | null
+          created_at?: string
+          dre_group?: string
+          id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       efo_monthly_analysis: {
         Row: {
           cash_balance: number
@@ -225,9 +255,11 @@ export type Database = {
           company_id: string | null
           competence_date: string | null
           cost_center: string | null
+          cost_type: string | null
           created_at: string
           dedupe_key: string | null
           description: string | null
+          dre_group: string | null
           due_date: string | null
           external_id: string | null
           id: string
@@ -253,9 +285,11 @@ export type Database = {
           company_id?: string | null
           competence_date?: string | null
           cost_center?: string | null
+          cost_type?: string | null
           created_at?: string
           dedupe_key?: string | null
           description?: string | null
+          dre_group?: string | null
           due_date?: string | null
           external_id?: string | null
           id?: string
@@ -281,9 +315,11 @@ export type Database = {
           company_id?: string | null
           competence_date?: string | null
           cost_center?: string | null
+          cost_type?: string | null
           created_at?: string
           dedupe_key?: string | null
           description?: string | null
+          dre_group?: string | null
           due_date?: string | null
           external_id?: string | null
           id?: string
