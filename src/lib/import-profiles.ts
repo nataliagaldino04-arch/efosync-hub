@@ -248,7 +248,8 @@ export function readAoa(aoa: unknown[][]): {
   const rows: Record<string, unknown>[] = [];
   for (let i = headerRow + 1; i < aoa.length; i++) {
     const line = aoa[i] ?? [];
-    if (line.every((c) => String(c ?? "").trim() === "")) continue;
+    // Ignora linhas vazias e linhas de total (uma única célula preenchida)
+    if (line.filter((c) => String(c ?? "").trim() !== "").length < 2) continue;
     const rec: Record<string, unknown> = {};
     headers.forEach((h, idx) => {
       rec[h] = line[idx] ?? "";
@@ -256,6 +257,18 @@ export function readAoa(aoa: unknown[][]): {
     rows.push(rec);
   }
   return { headers, rows, headerRow };
+}
+
+/**
+ * Limpa nomes de fornecedor vindos de descrições:
+ * "Pagamento de Conta: LSI S.A 3/5" → "LSI S.A".
+ */
+export function stripSupplierNoise(input: unknown): string {
+  return String(input ?? "")
+    .replace(/^\s*pagamento\s+de\s+conta\s*:\s*/i, "")
+    .replace(/\s+\d{1,3}\s*\/\s*\d{1,3}\s*$/, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 // ---------------------------------------------------------------------------
