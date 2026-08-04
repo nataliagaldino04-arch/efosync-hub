@@ -97,9 +97,7 @@ function BalancoPage() {
   const previous = useMemo(() => {
     const pm = month === 1 ? 12 : month - 1;
     if (month === 1) return null;
-    return (
-      (sheets as Record<string, unknown>[]).find((s) => Number(s.period_month) === pm) ?? null
-    );
+    return (sheets as Record<string, unknown>[]).find((s) => Number(s.period_month) === pm) ?? null;
   }, [sheets, month]);
 
   useEffect(() => {

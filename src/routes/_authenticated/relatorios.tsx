@@ -276,83 +276,87 @@ function ReportsPage() {
           <TabsTrigger value="dre">DRE Gerencial</TabsTrigger>
         </TabsList>
         <TabsContent value="fluxo" className="mt-4">
-      <div className="grid gap-4 lg:grid-cols-2 mb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Fluxo mensal</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthly}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="mes" />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Legend />
-                <Bar dataKey="receitas" fill="var(--success)" name="Receitas" />
-                <Bar dataKey="despesas" fill="var(--destructive)" name="Despesas" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Inadimplência (aging)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={aging}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <XAxis dataKey="faixa" />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-                <Bar dataKey="valor" fill="var(--warning)" name="Em aberto" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Ranking por cliente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="text-right">Lançamentos</TableHead>
-                  <TableHead className="text-right">Total atualizado</TableHead>
-                  <TableHead className="text-right">Juros</TableHead>
-                  <TableHead className="text-right">Em aberto</TableHead>
-                  <TableHead className="w-32"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {byClient.map((c) => (
-                  <TableRow key={c.cliente}>
-                    <TableCell>{c.cliente}</TableCell>
-                    <TableCell className="text-right">{c.qtd}</TableCell>
-                    <TableCell className="text-right">{formatBRL(c.total)}</TableCell>
-                    <TableCell className="text-right text-warning">{formatBRL(c.juros)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatBRL(c.aberto)}</TableCell>
-                    <TableCell>
-                      {c.aberto > 0 && (
-                        <Button size="sm" variant="outline" onClick={() => createAction(c)}>
-                          <Target className="h-3.5 w-3.5 mr-1" />
-                          5W2H
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="grid gap-4 lg:grid-cols-2 mb-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Fluxo mensal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={monthly}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="mes" />
+                    <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => formatBRL(v)} />
+                    <Legend />
+                    <Bar dataKey="receitas" fill="var(--success)" name="Receitas" />
+                    <Bar dataKey="despesas" fill="var(--destructive)" name="Despesas" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Inadimplência (aging)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={aging}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="faixa" />
+                    <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => formatBRL(v)} />
+                    <Bar dataKey="valor" fill="var(--warning)" name="Em aberto" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Ranking por cliente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead className="text-right">Lançamentos</TableHead>
+                      <TableHead className="text-right">Total atualizado</TableHead>
+                      <TableHead className="text-right">Juros</TableHead>
+                      <TableHead className="text-right">Em aberto</TableHead>
+                      <TableHead className="w-32"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {byClient.map((c) => (
+                      <TableRow key={c.cliente}>
+                        <TableCell>{c.cliente}</TableCell>
+                        <TableCell className="text-right">{c.qtd}</TableCell>
+                        <TableCell className="text-right">{formatBRL(c.total)}</TableCell>
+                        <TableCell className="text-right text-warning">
+                          {formatBRL(c.juros)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatBRL(c.aberto)}
+                        </TableCell>
+                        <TableCell>
+                          {c.aberto > 0 && (
+                            <Button size="sm" variant="outline" onClick={() => createAction(c)}>
+                              <Target className="h-3.5 w-3.5 mr-1" />
+                              5W2H
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
         <TabsContent value="dre" className="mt-4">
           <Card>

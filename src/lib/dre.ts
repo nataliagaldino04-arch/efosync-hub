@@ -279,7 +279,17 @@ export function balanceTotals(values: BalanceValues): BalanceTotals {
   const pl = sectionTotal(values, "pl");
   const ativo = ac + anc;
   const passivo = pc + pnc;
-  return { ac, anc, pc, pnc, pl, ativo, passivo, passivoMaisPl: passivo + pl, diferenca: ativo - (passivo + pl) };
+  return {
+    ac,
+    anc,
+    pc,
+    pnc,
+    pl,
+    ativo,
+    passivo,
+    passivoMaisPl: passivo + pl,
+    diferenca: ativo - (passivo + pl),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -341,9 +351,7 @@ export function computeIndexes({
   const pontoEquilibrio = margemContribuicao > 0 ? dre.despesasFixas / margemContribuicao : null;
 
   const liquidezCorrente = t ? div(t.ac, t.pc) : null;
-  const liquidezSeca = t
-    ? div(t.ac - (Number(balance?.["ac_estoques"]) || 0), t.pc)
-    : null;
+  const liquidezSeca = t ? div(t.ac - (Number(balance?.["ac_estoques"]) || 0), t.pc) : null;
   const liquidezImediata = t
     ? div(
         (Number(balance?.["ac_caixa_bancos"]) || 0) + (Number(balance?.["ac_aplicacoes"]) || 0),

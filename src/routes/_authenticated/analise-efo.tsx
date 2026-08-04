@@ -73,10 +73,7 @@ function EFOPage() {
     },
   });
 
-  const dre = useMemo(
-    () => buildDre(txs as Array<Record<string, unknown>>, year),
-    [txs, year],
-  );
+  const dre = useMemo(() => buildDre(txs as Array<Record<string, unknown>>, year), [txs, year]);
 
   const monthly = useMemo(
     () =>
@@ -248,9 +245,7 @@ function EFOPage() {
             {indexes.list.map((idx) => (
               <div
                 key={idx.key}
-                className={`rounded-lg border p-3 ${
-                  idx.value === null ? "opacity-50" : ""
-                }`}
+                className={`rounded-lg border p-3 ${idx.value === null ? "opacity-50" : ""}`}
                 title={idx.hint}
               >
                 <div className="text-xs text-muted-foreground">{idx.label}</div>
