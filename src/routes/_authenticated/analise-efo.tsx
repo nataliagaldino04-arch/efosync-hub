@@ -96,7 +96,9 @@ function EFOPage() {
         row.receitas += info.updated;
       } else if (EXPENSE_TYPES.includes(String(t.movement_type))) {
         const cat = String(t.category ?? "");
-        if (FIXED_CATS.includes(cat)) row.despesasFixas += info.updated;
+        const costType = String(t.cost_type ?? "").toLowerCase();
+        const isFixed = costType ? costType.startsWith("fix") : FIXED_CATS.includes(cat);
+        if (isFixed) row.despesasFixas += info.updated;
         else row.despesasVariaveis += info.updated;
         row.despesas += info.updated;
       }

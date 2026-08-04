@@ -1,11 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { adminClient, authenticateBearer, corsPreflight, json } from "@/lib/api-auth.server";
-import { normalizeEfoRow, toDbTransaction, type EfoHeader } from "@/lib/efo-schema";
+import { normalizeEfoRow, toDbTransaction } from "@/lib/efo-schema";
+import {
+  mapWithProfile,
+  normalizeCostType,
+  profileById,
+  stripSupplierNoise,
+  suggestDreGroup,
+} from "@/lib/import-profiles";
 
 interface Body {
   rows: Record<string, unknown>[];
   default_year?: number;
   default_source?: string;
+  /** id de um perfil de importação (ex: contas_pagar_clinica) para traduzir cabeçalhos */
+  profile?: string;
 }
 
 export const Route = createFileRoute("/api/public/efo/import/financial-transactions")({
@@ -39,13 +48,39 @@ export const Route = createFileRoute("/api/public/efo/import/financial-transacti
         const errors: { row: number; errors: string[] }[] = [];
         const payload: ReturnType<typeof toDbTransaction>[] = [];
 
+        const profile = body.profile ? profileById(body.profile) : undefined;
+        if (body.profile && !profile)
+          return json({ error: `perfil desconhecido: ${body.profile}` }, { status: 400 });
+
         for (let i = 0; i < body.rows.length; i++) {
           const r = body.rows[i];
-          const canonical = r as Record<EfoHeader, unknown>;
+          let canonical = r as Record<string, unknown>;
+          if (profile) {
+            const map = mapWithProfile(profile, Object.keys(r));
+            const translated: Record<string, unknown> = {};
+            for (const [raw, targets] of Object.entries(map)) {
+              for (const t of targets) {
+                const value = t === "cliente_nome" ? stripSupplierNoise(r[raw]) : r[raw];
+                if (value === "" || value == null) continue;
+                if (translated[t] !== undefined && translated[t] !== "") {
+                  if (t === "descricao" || t === "observacoes" || t === "centro_custo")
+                    translated[t] = `${translated[t]} | ${value}`;
+                } else {
+                  translated[t] = value;
+                }
+              }
+            }
+            if (translated["tipo_custo"] !== undefined)
+              translated["tipo_custo"] = normalizeCostType(translated["tipo_custo"]);
+            canonical = translated;
+          }
           const { row, errors: errs } = normalizeEfoRow(canonical, {
             defaultYear: body.default_year,
             defaultSource: body.default_source ?? "api",
+            forceMovementType: profile?.forceMovementType,
+            paidFromPaymentDate: profile?.paidFromPaymentDate,
           });
+          if (!row.grupo_dre) row.grupo_dre = suggestDreGroup(row.categoria);
           if (errs.length) {
             errors.push({ row: i, errors: errs });
             continue;
