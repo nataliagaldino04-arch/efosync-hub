@@ -119,6 +119,43 @@ function validIsoDate(y: number, m: number, d: number): string | null {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
+/**
+ * Parse competence periods: "FEV/2026" | "fev/26" | "02/2026" | "2026-02" | "12/06/2026" | Date.
+ * Returns the first day of the month in ISO format. "-" / empty => null.
+ */
+export function parseCompetence(
+  input: string | Date | null | undefined,
+  defaultYear?: number,
+): string | null {
+  if (input === null || input === undefined) return null;
+  if (input instanceof Date) return parseBRDate(input);
+  const s = String(input).trim();
+  if (!s || s === "-" || s === "—") return null;
+  // MMM/AAAA or MMM-AA (fev/2026)
+  const my = s.match(/^([a-zA-Zçã]+)[\s/\-.]+(\d{2,4})$/);
+  if (my) {
+    const m = MONTHS_PT[my[1].slice(0, 3).toLowerCase()];
+    if (m) {
+      const y = my[2].length === 2 ? 2000 + Number(my[2]) : Number(my[2]);
+      return validIsoDate(y, m, 1);
+    }
+  }
+  // mm/aaaa
+  const nm = s.match(/^(\d{1,2})[/\-.](\d{4})$/);
+  if (nm) return validIsoDate(Number(nm[2]), Number(nm[1]), 1);
+  // aaaa-mm
+  const ym = s.match(/^(\d{4})[-/](\d{1,2})$/);
+  if (ym) return validIsoDate(Number(ym[1]), Number(ym[2]), 1);
+  // Only a month name (uses default year)
+  const only = MONTHS_PT[s.slice(0, 3).toLowerCase()];
+  if (only && /^[a-zA-Zçã]+$/.test(s))
+    return validIsoDate(defaultYear ?? new Date().getFullYear(), only, 1);
+  // Full date => normalize to first day of its month
+  const full = parseBRDate(s, defaultYear);
+  if (full) return `${full.slice(0, 7)}-01`;
+  return null;
+}
+
 /** Boolean-ish strings: pago, sim, yes, 1 => true */
 export function parseBRBoolean(input: unknown): boolean {
   if (typeof input === "boolean") return input;
