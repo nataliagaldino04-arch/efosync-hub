@@ -598,7 +598,9 @@ function ImportPage() {
                               </SelectContent>
                             </Select>
                             {targets.length > 1 && (
-                              <Badge variant="outline">também → {targets.slice(1).join(", ")}</Badge>
+                              <Badge variant="outline">
+                                também → {targets.slice(1).join(", ")}
+                              </Badge>
                             )}
                           </div>
                         </TableCell>
