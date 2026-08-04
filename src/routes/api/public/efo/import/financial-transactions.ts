@@ -5,6 +5,7 @@ import {
   mapWithProfile,
   normalizeCostType,
   profileById,
+  stripSupplierNoise,
   suggestDreGroup,
 } from "@/lib/import-profiles";
 
@@ -58,9 +59,9 @@ export const Route = createFileRoute("/api/public/efo/import/financial-transacti
             const map = mapWithProfile(profile, Object.keys(r));
             const translated: Record<string, unknown> = {};
             for (const [raw, targets] of Object.entries(map)) {
-              const value = r[raw];
-              if (value === "" || value == null) continue;
               for (const t of targets) {
+                const value = t === "cliente_nome" ? stripSupplierNoise(r[raw]) : r[raw];
+                if (value === "" || value == null) continue;
                 if (translated[t] !== undefined && translated[t] !== "") {
                   if (t === "descricao" || t === "observacoes" || t === "centro_custo")
                     translated[t] = `${translated[t]} | ${value}`;
