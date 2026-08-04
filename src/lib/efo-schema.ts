@@ -1,5 +1,5 @@
 // EFO canonical import/export schema, alias map, validators.
-import { parseBRBoolean, parseBRDate, parseBRNumber } from "./br-format";
+import { parseBRBoolean, parseBRDate, parseBRNumber, parseCompetence } from "./br-format";
 import { computeUpdated } from "./finance";
 
 export const EFO_HEADERS = [
@@ -78,7 +78,7 @@ export const HEADER_ALIASES: Record<string, EfoHeader> = {
   notas: "observacoes",
 };
 
-function normKey(k: string): string {
+export function normKey(k: string): string {
   return String(k ?? "")
     .toLowerCase()
     .trim()
@@ -154,11 +154,21 @@ export interface EfoRow {
   status: string;
   origem_sistema: string;
   observacoes: string | null;
+  /** Fixo | Variável (classificação de custo) */
+  tipo_custo: string | null;
+  /** Grupo do DRE do modelo EFO */
+  grupo_dre: string | null;
 }
 
 export interface NormalizeOptions {
   defaultYear?: number;
   defaultSource?: string;
+  /** Fixa o tipo de movimento (perfis especializados: Contas a Pagar, etc.) */
+  forceMovementType?: MovementType;
+  /** Data de pagamento preenchida => lançamento pago */
+  paidFromPaymentDate?: boolean;
+  /** Categoria → grupo do DRE (mapeamento memorizado/editado) */
+  dreGroupByCategory?: Record<string, string>;
 }
 
 /** Normalize a single mapped row (canonical keys already). Returns row + errors. */
@@ -175,11 +185,13 @@ export function normalizeEfoRow(
 
   const cliente_nome = str(get("cliente_nome"));
   const tipoRaw = str(get("tipo_movimento"));
-  const tipo_movimento = (tipoRaw as MovementType) ?? "Receita";
+  const tipo_movimento = opts.forceMovementType ?? ((tipoRaw as MovementType) || "Receita");
   if (!cliente_nome) errors.push("cliente_nome obrigatório");
-  if (!tipoRaw) errors.push("tipo_movimento obrigatório");
-  else if (!MOVEMENT_TYPES.includes(tipo_movimento))
-    errors.push(`tipo_movimento inválido: ${tipoRaw}`);
+  if (!opts.forceMovementType) {
+    if (!tipoRaw) errors.push("tipo_movimento obrigatório");
+    else if (!MOVEMENT_TYPES.includes(tipo_movimento))
+      errors.push(`tipo_movimento inválido: ${tipoRaw}`);
+  }
 
   const valor_original = parseBRNumber(get("valor_original") as string | number);
   if (!(valor_original > 0)) errors.push("valor_original deve ser > 0");
@@ -191,7 +203,10 @@ export function normalizeEfoRow(
     errors.push("data_vencimento obrigatória para " + tipo_movimento);
 
   const rawComp = get("data_competencia");
-  const data_competencia = parseBRDate(rawComp as string, opts.defaultYear);
+  const data_competencia =
+    parseBRDate(rawComp as string, opts.defaultYear) ??
+    parseCompetence(rawComp as string, opts.defaultYear) ??
+    (data_vencimento ? `${data_vencimento.slice(0, 7)}-01` : null);
   if (rawComp && !data_competencia) errors.push(`data_competencia inválida: ${String(rawComp)}`);
   const rawPag = get("data_pagamento");
   const data_pagamento = parseBRDate(rawPag as string, opts.defaultYear);
@@ -246,6 +261,7 @@ export function normalizeEfoRow(
 
   const rawStatus = str(get("status"));
   let status = rawStatus ?? "Em aberto";
+  if (!rawStatus && opts.paidFromPaymentDate && data_pagamento) status = "Pago";
   if (rawStatus) {
     const low = rawStatus.toLowerCase();
     if (parseBRBoolean(rawStatus)) status = "Pago";
@@ -263,12 +279,18 @@ export function normalizeEfoRow(
   if (status === "Pago" && finalPaid < valor_original)
     errors.push("status Pago mas valor_pago menor que valor_original");
 
+  const categoria = str(get("categoria"));
+  const tipo_custo = str(input["tipo_custo"]) ?? null;
+  const grupo_dre =
+    str(input["grupo_dre"]) ??
+    (categoria ? (opts.dreGroupByCategory?.[categoria.toLowerCase().trim()] ?? null) : null);
+
   const row: EfoRow = {
     id_externo: str(get("id_externo")),
     cliente_nome,
     cliente_documento: str(get("cliente_documento")),
     tipo_movimento,
-    categoria: str(get("categoria")),
+    categoria,
     centro_custo: str(get("centro_custo")),
     descricao: str(get("descricao")),
     valor_original,
@@ -285,6 +307,8 @@ export function normalizeEfoRow(
     status,
     origem_sistema: str(get("origem_sistema")) ?? opts.defaultSource ?? "import",
     observacoes: str(get("observacoes")),
+    tipo_custo,
+    grupo_dre,
   };
   return { row, errors };
 }
@@ -313,6 +337,8 @@ export function toDbTransaction(row: EfoRow, ownerId: string, companyId: string 
     status: row.status,
     source_system: row.origem_sistema,
     notes: row.observacoes,
+    cost_type: row.tipo_custo,
+    dre_group: row.grupo_dre,
   };
 }
 
