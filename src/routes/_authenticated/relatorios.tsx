@@ -37,6 +37,8 @@ import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
 import { toast } from "sonner";
 import { RECEIVABLE_TYPES, PAYABLE_TYPES } from "@/lib/efo-schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { buildDre, sumDre, DRE_LINES } from "@/lib/dre";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatórios — EFO" }] }),
@@ -52,6 +54,7 @@ function ReportsPage() {
   const [from, setFrom] = useState(firstDay);
   const [to, setTo] = useState(lastDay);
   const [companyId, setCompanyId] = useState<string>("all");
+  const dreYear = Number(from.slice(0, 4)) || today.getFullYear();
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies-list"],
@@ -202,9 +205,35 @@ function ReportsPage() {
   const totRec = enriched.filter((t) => t.isRevenue).reduce((s, t) => s + t.updated, 0);
   const totDesp = enriched.filter((t) => t.isExpense).reduce((s, t) => s + t.updated, 0);
 
+  const { data: dreTxs = [] } = useQuery({
+    queryKey: ["dre-tx", dreYear, companyId],
+    queryFn: async () => {
+      let q = supabase
+        .from("financial_transactions")
+        .select("*")
+        .gte("due_date", `${dreYear}-01-01`)
+        .lte("due_date", `${dreYear}-12-31`);
+      if (companyId !== "all") q = q.eq("company_id", companyId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const dreMonths = useMemo(
+    () => buildDre(dreTxs as Record<string, unknown>[], dreYear),
+    [dreTxs, dreYear],
+  );
+  const dreTotal = useMemo(() => sumDre(dreMonths), [dreMonths]);
+
   return (
     <>
       <PageHeader title="Relatórios" description="Análises financeiras por período e cliente." />
+      <Tabs defaultValue="fluxo" className="mb-4">
+        <TabsList>
+          <TabsTrigger value="fluxo">Fluxo e inadimplência</TabsTrigger>
+          <TabsTrigger value="dre">DRE Gerencial</TabsTrigger>
+        </TabsList>
+        <TabsContent value="fluxo" className="mt-4">
       <Card className="mb-4">
         <CardContent className="p-4 flex flex-wrap items-end gap-3">
           <div className="space-y-1">
@@ -325,6 +354,64 @@ function ReportsPage() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+        <TabsContent value="dre" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>DRE Gerencial — {dreYear}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-64">Linha</TableHead>
+                      {dreMonths.map((m) => (
+                        <TableHead key={m.month} className="text-right capitalize">
+                          {m.label}
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="text-right">% Rec.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {DRE_LINES.map((line) => {
+                      const total = dreTotal[line.key];
+                      const pct =
+                        dreTotal.receitaBruta > 0 ? (total / dreTotal.receitaBruta) * 100 : 0;
+                      const strong = line.kind === "subtotal" || line.kind === "result";
+                      return (
+                        <TableRow
+                          key={line.key}
+                          className={strong ? "bg-muted/40 font-medium" : undefined}
+                        >
+                          <TableCell>{line.label}</TableCell>
+                          {dreMonths.map((m) => (
+                            <TableCell key={m.month} className="text-right whitespace-nowrap">
+                              {formatBRL(m[line.key])}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right whitespace-nowrap font-medium">
+                            {formatBRL(total)}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {pct.toFixed(1)}%
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Cada linha usa o grupo do DRE gravado no lançamento. O ano segue a data inicial do
+                filtro acima.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
