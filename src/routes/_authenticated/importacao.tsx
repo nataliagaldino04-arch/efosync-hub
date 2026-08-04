@@ -45,6 +45,7 @@ import {
   profileById,
   profilesForKind,
   readAoa,
+  stripSupplierNoise,
   suggestDreGroup,
   type ImportKind,
   type TargetField,
@@ -148,7 +149,7 @@ function ImportPage() {
       const canonical: Record<string, unknown> = {};
       for (const raw of Object.keys(r)) {
         for (const target of mapping[raw] ?? []) {
-          const value = r[raw];
+          const value = target === "cliente_nome" ? stripSupplierNoise(r[raw]) : r[raw];
           if (value === "" || value == null) continue;
           if (canonical[target] !== undefined && canonical[target] !== "") {
             if (target === "descricao" || target === "observacoes" || target === "centro_custo")
