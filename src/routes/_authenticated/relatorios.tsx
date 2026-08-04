@@ -228,12 +228,6 @@ function ReportsPage() {
   return (
     <>
       <PageHeader title="Relatórios" description="Análises financeiras por período e cliente." />
-      <Tabs defaultValue="fluxo" className="mb-4">
-        <TabsList>
-          <TabsTrigger value="fluxo">Fluxo e inadimplência</TabsTrigger>
-          <TabsTrigger value="dre">DRE Gerencial</TabsTrigger>
-        </TabsList>
-        <TabsContent value="fluxo" className="mt-4">
       <Card className="mb-4">
         <CardContent className="p-4 flex flex-wrap items-end gap-3">
           <div className="space-y-1">
@@ -276,7 +270,12 @@ function ReportsPage() {
           </div>
         </CardContent>
       </Card>
-
+      <Tabs defaultValue="fluxo" className="mb-4">
+        <TabsList>
+          <TabsTrigger value="fluxo">Fluxo e inadimplência</TabsTrigger>
+          <TabsTrigger value="dre">DRE Gerencial</TabsTrigger>
+        </TabsList>
+        <TabsContent value="fluxo" className="mt-4">
       <div className="grid gap-4 lg:grid-cols-2 mb-4">
         <Card>
           <CardHeader>
