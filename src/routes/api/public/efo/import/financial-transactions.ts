@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { adminClient, authenticateBearer, corsPreflight, json } from "@/lib/api-auth.server";
-import { normalizeEfoRow, toDbTransaction, type EfoHeader } from "@/lib/efo-schema";
+import { normalizeEfoRow, toDbTransaction } from "@/lib/efo-schema";
 import {
   mapWithProfile,
   normalizeCostType,
